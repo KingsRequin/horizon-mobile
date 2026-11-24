@@ -2,7 +2,8 @@ package fr.kingsrequin.horizon.link
 
 /**
  * Les derniers événements de la liaison, pour le rapport de diagnostic. En mémoire seulement.
- * Ne reçoit jamais de jeton ni d'empreinte.
+ * Le rapport est collé en public : le journal ne reçoit donc jamais de jeton, d'empreinte,
+ * d'adresse, de nom de PC ni de message d'erreur brut.
  */
 class LinkLog(private val capacity: Int = 20) {
     private val entries = ArrayDeque<String>()

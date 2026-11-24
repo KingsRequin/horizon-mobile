@@ -329,8 +329,22 @@ class ConnectionManagerTest {
         runCurrent(); m.onNetwork(true); advanceTimeBy(65_000)
         t.drop(); runCurrent()
         val lines = log.lines()
-        assertTrue(lines.toString(), lines.any { it.endsWith("connecté par $PC") })
-        assertTrue(lines.toString(), lines.any { it.startsWith("00:01:05 ") && "coupée" in it })
+        assertTrue(lines.toString(), lines.any { it.endsWith("connecté (adresse 1)") })
+        assertTrue(lines.toString(), lines.any { it.startsWith("00:01:05 ") && "liaison coupée : IOException" in it })
         assertFalse("ni jeton ni empreinte dans le journal", lines.any { "jeton" in it || "empreinte" in it })
+    }
+
+    @Test
+    fun theLogNamesNeitherThePcNorItsAddresses() = runTest {
+        // Le journal part dans le rapport de diagnostic, collé en public : il ne reçoit donc ni
+        // adresse, ni nom du PC, ni message d'erreur (qui les répète), seulement un rang et un genre.
+        val log = LinkLog()
+        val store = MemoryStore(Pairing("pc-1", "Mon PC", listOf(PC, "10.0.0.5"), "Mon PC", 28680, "empreinte", "tel-1", "jeton", "192.168.1.60"))
+        val t = FakeTransport(reachable = emptySet(), wrongPc = setOf("10.0.0.5"))
+        val m = ConnectionManager(store, t, clock = { currentTime }, scope = backgroundScope, deviceName = { "Pixel" }, appVersion = "0.1.0", log = log)
+        runCurrent(); m.onNetwork(true); advanceTimeBy(200_000)
+        val lines = log.lines()
+        assertTrue(lines.toString(), lines.any { it.endsWith("adresse 1 : IOException") } && lines.any { it.endsWith("adresse 4 : IOException") })
+        for (never in listOf("192.168", "10.0.0.5", "Mon", "PC.local", "injoignable")) assertFalse("$never dans $lines", lines.any { never in it })
     }
 }

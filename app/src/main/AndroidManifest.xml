@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Lire le QR code d'appairage affiché par Horizon. Un appareil sans caméra peut installer
          l'appli : il s'appaire en ouvrant le lien du code. -->
@@ -7,6 +8,18 @@
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="false" />
+
+    <!-- Proposer à l'utilisateur de laisser l'appli tourner en arrière-plan : c'est ce qui tient la
+         liaison avec le PC écran éteint. L'appli n'est pas distribuée par le Play Store, dont la
+         règle réserve cette demande à quelques usages. -->
+    <uses-permission
+        android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
+        tools:ignore="BatteryLife" />
+
+    <!-- Savoir si les services Google sont présents, pour le rapport de diagnostic. -->
+    <queries>
+        <package android:name="com.google.android.gms" />
+    </queries>
 
     <!-- Aucune sauvegarde : le jeton d'appairage ne doit pas quitter le téléphone. -->
     <application

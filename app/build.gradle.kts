@@ -49,6 +49,9 @@ android {
 
     buildFeatures { compose = true }
 
+    // La liste des langues de l'appli (réglage « langue par appli » du système, Android 13 et plus).
+    androidResources { generateLocaleConfig = true }
+
     packaging {
         resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" }
     }

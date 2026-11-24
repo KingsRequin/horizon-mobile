@@ -71,6 +71,9 @@ class ConnectionManager(
         var connected = false
         var sawWrongPc = false
         val host get() = candidates[index]
+
+        /** L'adresse en cours pour le journal : son rang, jamais elle-même ni le nom du PC. */
+        val rank get() = "adresse ${index + 1}"
     }
 
     private val events = Channel<Event>(Channel.UNLIMITED)
@@ -270,7 +273,7 @@ class ConnectionManager(
         }
         live = a.session
         current.value = LinkState.Connected(ok.pcName, parseColor(ok.accent) ?: DEFAULT_ACCENT, ok.features.toSet())
-        log.add(clock(), "connecté par ${a.host}")
+        log.add(clock(), "connecté (${a.rank})")
         onConnected?.invoke()
     }
 
@@ -285,7 +288,7 @@ class ConnectionManager(
             return
         }
         if (error is WrongPc) a.sawWrongPc = true
-        log.add(clock(), "${a.host} : ${describe(error)}")
+        log.add(clock(), "${a.rank} : ${describe(error)}")
         a.index++
         open(a)
     }
@@ -345,11 +348,14 @@ class ConnectionManager(
     /** Depuis quand la liaison est tombée (maintenant, si on ne le savait pas). */
     private fun since(): Long = offlineSince ?: clock().also { offlineSince = it }
 
-    /** Une erreur pour le journal : sa classe et son message, sans plus. */
+    /**
+     * Une erreur pour le journal : son genre seulement. Son message répète souvent l'adresse ou le
+     * nom du PC, et le journal part dans le rapport de diagnostic.
+     */
     private fun describe(error: Throwable?): String = when (error) {
         null -> "fermée"
         is WrongPc -> "ce n'est pas le PC appairé"
-        else -> listOfNotNull(error.javaClass.simpleName, error.message?.take(80)).joinToString(" : ")
+        else -> error.javaClass.simpleName
     }
 
     private companion object {

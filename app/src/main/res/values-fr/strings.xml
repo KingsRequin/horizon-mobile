@@ -34,4 +34,40 @@
     <string name="ago_minutes">Il y a %1$d min</string>
     <string name="ago_hours">Il y a %1$d h</string>
     <string name="ago_days">Il y a %1$d j</string>
+    <!-- Accueil -->
+    <string name="tab_home">Accueil</string>
+    <string name="tab_settings">Réglages</string>
+    <string name="status_connected">Connecté · réseau local</string>
+    <string name="status_connecting">Reconnexion…</string>
+    <string name="status_offline_seen">Hors ligne · vu %1$s</string>
+    <string name="status_no_wifi">Pas de Wi-Fi</string>
+    <string name="status_wrong_pc">Autre machine à cette adresse</string>
+    <string name="status_incompatible">Version incompatible</string>
+    <string name="status_rejected">Appairage retiré</string>
+    <string name="home_sent">Envoyé au PC</string>
+    <string name="home_battery">Batterie du téléphone</string>
+    <string name="home_waiting">En attente du PC</string>
+    <string name="home_rejected">Ce PC ne reconnaît plus ce téléphone.</string>
+    <string name="home_pair_again">Appairer de nouveau</string>
+    <string name="advice_background">Laisse Horizon Mobile tourner en arrière-plan</string>
+    <string name="advice_background_detail">Sinon ton téléphone peut couper la liaison quand l’écran est éteint.</string>
+    <string name="advice_allow">Autoriser</string>
+    <string name="advice_killed">Ton téléphone a arrêté l’appli</string>
+    <string name="advice_killed_detail">Autorise-la à tourner en arrière-plan dans ses réglages.</string>
+
+    <!-- Réglages -->
+    <string name="settings_link">Liaison</string>
+    <string name="settings_pc">PC appairé</string>
+    <string name="settings_forget">Oublier ce PC</string>
+    <string name="settings_forget_confirm">Oublier %1$s ? Il faudra scanner un nouveau code.</string>
+    <string name="settings_forget_yes">Oublier</string>
+    <string name="settings_app">Appli</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_report">Copier le rapport de diagnostic</string>
+    <string name="settings_report_detail">Sans donnée personnelle. À coller dans un signalement sur GitHub.</string>
+    <string name="settings_report_copied">Rapport copié</string>
+    <string name="settings_licences">Licences</string>
+    <string name="settings_source">Code source</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="update_available">Version %1$s disponible · Télécharger</string>
 </resources>

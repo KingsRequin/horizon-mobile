@@ -11,8 +11,9 @@ private val localName = Regex("""\S+\.local\b""")
 
 /**
  * Le rapport de diagnostic, à coller dans un signalement : ce qui aide à comprendre une liaison
- * qui ne tient pas, et rien qui identifie la personne. Ni nom du PC, ni adresse (remplacées par
- * « adresse 1 », « adresse 2 »…), ni jeton (le journal n'en reçoit jamais).
+ * qui ne tient pas, et rien qui identifie la personne. Le journal de la liaison n'en reçoit pas
+ * (ni nom du PC, ni adresse, ni jeton : voir `LinkLog`) ; par précaution, ce qui ressemblerait
+ * quand même à une adresse ou à un nom en `.local` est remplacé ici.
  */
 fun diagnostic(info: DeviceInfo, appVersion: String, mode: LinkMode, state: LinkState, exitReason: String?, log: List<String>): String {
     val addresses = LinkedHashMap<String, String>()
