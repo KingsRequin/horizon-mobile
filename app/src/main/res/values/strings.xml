@@ -1,4 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Horizon Mobile</string>
+
+    <!-- Pairing -->
+    <string name="pairing_title">Link your PC</string>
+    <string name="pairing_intro">On your PC, open Horizon › Settings › Plugins, turn on Phone, then show the code.</string>
+    <string name="pairing_intro_network">Your phone and your PC must be on the same Wi-Fi. Nothing goes through the Internet.</string>
+    <string name="pairing_scan">Scan the code</string>
+    <string name="pairing_scan_title">Point at the code shown by Horizon</string>
+    <string name="pairing_camera_denied">Without the camera, the app cannot read the code. Allow it in the phone settings.</string>
+    <string name="pairing_open_settings">Open settings</string>
+    <string name="pairing_retry">Try again</string>
+    <string name="pairing_not_horizon">This code is not from Horizon.</string>
+    <string name="pairing_malformed">This Horizon code is incomplete. Show a new one.</string>
+    <string name="pairing_version">Update Horizon or the app: they do not speak the same version.</string>
+    <string name="pairing_connecting">Connecting to the PC…</string>
+    <string name="pairing_unreachable">PC not found. Check that the phone is on the same Wi-Fi.</string>
+    <string name="pairing_expired">This code has expired. Show a new one in Horizon.</string>
+    <string name="pairing_used">This code was already used. Show a new one in Horizon.</string>
+    <string name="pairing_refused">The PC refused this code. Show a new one in Horizon.</string>
+    <string name="pairing_wrong_pc">Another machine answers at this PC\'s address. Show a new code in Horizon.</string>
+    <string name="pairing_done_title">Linked to %1$s</string>
+    <string name="pairing_mode_question">When should the link be kept?</string>
+    <string name="pairing_mode_continuous">All the time (recommended)</string>
+    <string name="pairing_mode_continuous_detail">The bar follows your battery even when the app is closed, with a discreet notification.</string>
+    <string name="pairing_mode_when_open">Only while the app is open</string>
+    <string name="pairing_mode_when_open_detail">Nothing runs in the background; the bar is only up to date when you open the app.</string>
 </resources>

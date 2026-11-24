@@ -4,9 +4,11 @@
 #   .\tools\sans-natif.ps1 <apk> [<apk>…]
 param([Parameter(Mandatory, ValueFromRemainingArguments)][string[]]$Apk)
 $ErrorActionPreference = 'Stop'
-# Ce que Compose apporte lui-même (parcours des tracés, androidx.graphics:graphics-path),
-# publié pour les quatre processeurs. Toute autre bibliothèque native se discute avant d'entrer.
-$known = @('libandroidx.graphics.path.so')
+# Ce qu'apportent, pour les quatre processeurs, des bibliothèques de Google dont l'appli ne peut
+# pas se passer : Compose (parcours des tracés, androidx.graphics:graphics-path) et CameraX (le
+# viseur du QR code : conversion des images et surfaces). Toute autre bibliothèque native se
+# discute avant d'entrer (DataStore a été écarté pour cela).
+$known = @('libandroidx.graphics.path.so', 'libimage_processing_util_jni.so', 'libsurface_util_jni.so')
 $abis = @('arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64')
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $failed = $false

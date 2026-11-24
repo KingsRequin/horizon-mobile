@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Appairage -->
+    <string name="pairing_title">Relier ton PC</string>
+    <string name="pairing_intro">Sur ton PC, ouvre Horizon › Réglages › Plugins, active Téléphone, puis affiche le code.</string>
+    <string name="pairing_intro_network">Ton téléphone et ton PC doivent être sur le même Wi-Fi. Rien ne passe par Internet.</string>
+    <string name="pairing_scan">Scanner le code</string>
+    <string name="pairing_scan_title">Vise le code affiché par Horizon</string>
+    <string name="pairing_camera_denied">Sans la caméra, l\'appli ne peut pas lire le code. Autorise-la dans les réglages du téléphone.</string>
+    <string name="pairing_open_settings">Ouvrir les réglages</string>
+    <string name="pairing_retry">Réessayer</string>
+    <string name="pairing_not_horizon">Ce code ne vient pas d\'Horizon.</string>
+    <string name="pairing_malformed">Ce code d\'Horizon est incomplet. Affiches-en un nouveau.</string>
+    <string name="pairing_version">Mets Horizon ou l\'appli à jour : ils ne parlent pas la même version.</string>
+    <string name="pairing_connecting">Connexion au PC…</string>
+    <string name="pairing_unreachable">PC introuvable. Vérifie que le téléphone est sur le même Wi-Fi.</string>
+    <string name="pairing_expired">Ce code a expiré. Affiches-en un nouveau dans Horizon.</string>
+    <string name="pairing_used">Ce code a déjà servi. Affiches-en un nouveau dans Horizon.</string>
+    <string name="pairing_refused">Le PC a refusé ce code. Affiches-en un nouveau dans Horizon.</string>
+    <string name="pairing_wrong_pc">Une autre machine répond à l\'adresse de ce PC. Affiche un nouveau code dans Horizon.</string>
+    <string name="pairing_done_title">Relié à %1$s</string>
+    <string name="pairing_mode_question">Quand garder la liaison ?</string>
+    <string name="pairing_mode_continuous">En continu (recommandé)</string>
+    <string name="pairing_mode_continuous_detail">La barre suit ta batterie même quand l\'appli est fermée, avec une notification discrète.</string>
+    <string name="pairing_mode_when_open">Seulement quand l\'appli est ouverte</string>
+    <string name="pairing_mode_when_open_detail">Rien ne tourne en arrière-plan, la barre n\'est à jour que quand tu ouvres l\'appli.</string>
+</resources>
