@@ -57,7 +57,8 @@ fun parsePairingLink(text: String): QrResult {
 
 /** Valeur encodée en pourcent ; `null` si elle est abîmée. Un « + » reste un plus. */
 private fun decode(value: String): String? = try {
-    URLDecoder.decode(value.replace("+", "%2B"), Charsets.UTF_8)
+    // Le nom du jeu de caractères, pas l'objet : cette forme-là n'existe qu'à partir d'Android 13.
+    URLDecoder.decode(value.replace("+", "%2B"), "UTF-8")
 } catch (_: IllegalArgumentException) {
     null
 }

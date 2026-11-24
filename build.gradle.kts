@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.android.lint) apply false
+    alias(libs.plugins.animalsniffer) apply false
 }
 
 // Android 7.0 et plus : l'appli doit tourner sur le plus d'appareils possible.
@@ -41,6 +43,12 @@ subprojects {
             lint { strict() }
         }
     }
+    // Modules Kotlin purs : lint les contrôle aussi (`checkDependencies` de l'appli), mais il n'y
+    // signale pas un appel de Java absent d'un vieil Android. C'est Animal Sniffer qui le fait
+    // (`check`), contre les signatures d'Android 7.0.
+    plugins.withId("com.android.lint") {
+        extensions.configure<Lint> { strict() }
+    }
     plugins.withId("com.android.application") {
         extensions.configure<ApplicationExtension> {
             compileSdk { version = release(sdkMajor) { minorApiLevel = sdkMinor } }
@@ -49,7 +57,10 @@ subprojects {
                 sourceCompatibility = JavaVersion.VERSION_17
                 targetCompatibility = JavaVersion.VERSION_17
             }
-            lint { strict() }
+            lint {
+                strict()
+                checkDependencies = true
+            }
         }
     }
 }
