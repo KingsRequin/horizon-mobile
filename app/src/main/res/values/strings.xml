@@ -24,6 +24,7 @@
     <string name="pairing_used">This code was already used. Show a new one in Horizon.</string>
     <string name="pairing_refused">The PC refused this code. Show a new one in Horizon.</string>
     <string name="pairing_wrong_pc">Another machine answers at this PC\'s address. Show a new code in Horizon.</string>
+    <string name="pairing_error">The phone could not save the pairing. Try again.</string>
     <string name="pairing_done_title">Linked to %1$s</string>
     <string name="pairing_mode_question">When should the link be kept?</string>
     <string name="pairing_mode_continuous">All the time (recommended)</string>
@@ -45,6 +46,7 @@
     <string name="status_no_wifi">No Wi-Fi</string>
     <string name="status_wrong_pc">Another machine at this address</string>
     <string name="status_incompatible">Incompatible version</string>
+    <string name="status_paused">Paused</string>
     <string name="status_rejected">Pairing removed</string>
     <string name="home_sent">Sent to the PC</string>
     <string name="home_battery">Phone battery</string>

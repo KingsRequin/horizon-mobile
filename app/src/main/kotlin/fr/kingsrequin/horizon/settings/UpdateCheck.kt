@@ -38,11 +38,13 @@ fun newerVersion(current: String, releaseJson: String): Update? {
     }
     if (newer == null || newer < 0) return null
     val apk = (release["assets"] as? JsonArray).orEmpty().filterIsInstance<JsonObject>().firstOrNull { it.text("name")?.endsWith(".apk") == true }
-    val url = apk?.text("browser_download_url")?.takeIf { it.startsWith("https://") } ?: return null
+    // Seulement un fichier des versions de ce dépôt : le lien s'ouvre dans le navigateur.
+    val url = apk?.text("browser_download_url")?.takeIf { it.startsWith(DOWNLOADS) } ?: return null
     return Update(version, url)
 }
 
 private const val LATEST = "https://api.github.com/repos/KingsRequin/horizon-mobile/releases/latest"
+private const val DOWNLOADS = "https://github.com/KingsRequin/horizon-mobile/releases/download/"
 private const val PREFS = "mise-a-jour"
 private const val KEY_CHECKED = "verifie"
 private const val KEY_VERSION = "version"
@@ -56,7 +58,7 @@ private const val DAY_MS = 86_400_000L
 suspend fun checkForUpdate(context: Context, current: String, nowMs: Long): Update? = withContext(Dispatchers.IO) {
     val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     if (nowMs - prefs.getLong(KEY_CHECKED, 0) >= DAY_MS) {
-        val found = fetch()?.let { newerVersion(current, it) }
+        val found = fetch(current)?.let { newerVersion(current, it) }
         prefs.edit {
             putLong(KEY_CHECKED, nowMs)
             putString(KEY_VERSION, found?.version)
@@ -68,11 +70,13 @@ suspend fun checkForUpdate(context: Context, current: String, nowMs: Long): Upda
     if (version != null && url != null) newerVersion(current, """{"tag_name":"v$version","assets":[{"name":"a.apk","browser_download_url":"$url"}]}""") else null
 }
 
-private fun fetch(): String? = try {
+private fun fetch(current: String): String? = try {
     val connection = (URL(LATEST).openConnection() as HttpURLConnection).apply {
         connectTimeout = 5_000
         readTimeout = 5_000
         setRequestProperty("Accept", "application/vnd.github+json")
+        // Un agent fixe : celui du système dirait le modèle du téléphone.
+        setRequestProperty("User-Agent", "HorizonMobile/$current")
     }
     try {
         if (connection.responseCode == HttpURLConnection.HTTP_OK) connection.inputStream.bufferedReader().use { it.readText() } else null

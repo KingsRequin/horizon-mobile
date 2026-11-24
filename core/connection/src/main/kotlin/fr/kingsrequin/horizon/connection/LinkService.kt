@@ -54,8 +54,8 @@ class LinkService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
-            // « Arrêter » : jusqu'à la prochaine ouverture de l'appli.
-            stopSelf()
+            // « Arrêter » : la liaison se ferme et le service s'arrête, jusqu'à la prochaine ouverture de l'appli.
+            Link.stop()
             return START_NOT_STICKY
         }
         // En continu, Android relance le service s'il a dû le tuer.

@@ -16,6 +16,9 @@ enum class OfflineReason {
 
     /** Le PC et l'appli ne parlent pas la même version : l'un des deux est à mettre à jour. */
     Incompatible,
+
+    /** La liaison est suspendue : arrêtée depuis la notification, ou appli fermée en mode « à l'ouverture ». */
+    Paused,
 }
 
 /** Où en est la liaison avec le PC. */
@@ -48,6 +51,9 @@ sealed interface PairResult {
     data object Unreachable : PairResult
 
     data object WrongPc : PairResult
+
+    /** Le téléphone n'a pas pu enregistrer l'appairage (coffre de clés indisponible). */
+    data object Error : PairResult
 }
 
 /** Attentes entre deux essais d'une série, en secondes. Après la dernière, on attend un événement. */

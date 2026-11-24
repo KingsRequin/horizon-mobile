@@ -36,7 +36,7 @@ class PairingLinkTest {
         // le téléphone lui-même) ne vient pas d'un Horizon honnête.
         fun link(hosts: String, name: String = "Bureau") = parsePairingLink("horizon://pair?v=1&h=$hosts&n=$name&p=28680&fp=f&t=t")
         for (ok in listOf("10.1.2.3", "172.16.0.1", "172.31.255.255", "192.168.1.49", "169.254.3.4")) assertEquals(ok, QrResult.Ok(PairingLink(listOf(ok), "Bureau", 28680, "f", "t")), link(ok))
-        for (bad in listOf("8.8.8.8", "172.32.0.1", "192.169.1.1", "100.64.0.1", "127.0.0.1", "0.0.0.0", "192.168.1.49,8.8.8.8")) assertEquals(bad, QrResult.Malformed, link(bad))
+        for (bad in listOf("8.8.8.8", "172.32.0.1", "192.169.1.1", "100.64.0.1", "127.0.0.1", "0.0.0.0", "192.168.1.49,8.8.8.8", "010.0.0.1", "192.168.01.49")) assertEquals(bad, QrResult.Malformed, link(bad))
         assertEquals("neuf adresses : trop", QrResult.Malformed, link(List(9) { "10.0.0.$it" }.joinToString(",")))
     }
 

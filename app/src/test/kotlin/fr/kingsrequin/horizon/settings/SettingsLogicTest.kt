@@ -25,15 +25,17 @@ class SettingsLogicTest {
 
     @Test
     fun onlyAStrictlyNewerReleaseIsOffered() {
-        val json = """{"tag_name":"v0.2.0","assets":[{"name":"SHA256SUMS","browser_download_url":"https://x/sums"},{"name":"horizon-mobile-0.2.0.apk","browser_download_url":"https://x/a.apk"}]}"""
-        assertEquals(Update("0.2.0", "https://x/a.apk"), newerVersion("0.1.0", json))
-        assertEquals(Update("0.2.0", "https://x/a.apk"), newerVersion("0.1.9-dev", json))
+        val apk = "https://github.com/KingsRequin/horizon-mobile/releases/download/v0.2.0/horizon-mobile-0.2.0.apk"
+        val json = """{"tag_name":"v0.2.0","assets":[{"name":"SHA256SUMS","browser_download_url":"https://x/sums"},{"name":"horizon-mobile-0.2.0.apk","browser_download_url":"$apk"}]}"""
+        assertEquals(Update("0.2.0", apk), newerVersion("0.1.0", json))
+        assertEquals(Update("0.2.0", apk), newerVersion("0.1.9-dev", json))
+        assertNull("seulement un fichier des versions de ce dépôt", newerVersion("0.1.0", json.replace(apk, "https://exemple.fr/a.apk")))
         assertNull(newerVersion("0.2.0", json))
         assertNull(newerVersion("0.10.0", json))
         assertNull(newerVersion("0.1.0", "pas du json"))
         assertNull(newerVersion("0.1.0", """{"tag_name":"v0.2.0","assets":[]}"""))
         assertNull(newerVersion("0.1.0", """{"tag_name":"nightly","assets":[{"name":"a.apk","browser_download_url":"https://x/a.apk"}]}"""))
-        assertNull("jamais un lien qui n'est pas en https", newerVersion("0.1.0", json.replace("https://x/a.apk", "http://x/a.apk")))
+        assertNull("jamais un lien qui n'est pas en https", newerVersion("0.1.0", json.replace("https://github", "http://github")))
     }
 
     @Test

@@ -22,6 +22,7 @@
     <string name="pairing_used">Ce code a déjà servi. Affiches-en un nouveau dans Horizon.</string>
     <string name="pairing_refused">Le PC a refusé ce code. Affiches-en un nouveau dans Horizon.</string>
     <string name="pairing_wrong_pc">Une autre machine répond à l\'adresse de ce PC. Affiche un nouveau code dans Horizon.</string>
+    <string name="pairing_error">Le téléphone n’a pas pu enregistrer l’appairage. Réessaie.</string>
     <string name="pairing_done_title">Relié à %1$s</string>
     <string name="pairing_mode_question">Quand garder la liaison ?</string>
     <string name="pairing_mode_continuous">En continu (recommandé)</string>
@@ -43,6 +44,7 @@
     <string name="status_no_wifi">Pas de Wi-Fi</string>
     <string name="status_wrong_pc">Autre machine à cette adresse</string>
     <string name="status_incompatible">Version incompatible</string>
+    <string name="status_paused">En pause</string>
     <string name="status_rejected">Appairage retiré</string>
     <string name="home_sent">Envoyé au PC</string>
     <string name="home_battery">Batterie du téléphone</string>

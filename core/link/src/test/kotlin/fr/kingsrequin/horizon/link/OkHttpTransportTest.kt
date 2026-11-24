@@ -48,6 +48,15 @@ class OkHttpTransportTest {
     }
 
     @Test
+    fun anAddressThatCannotBeWrittenFailsLikeAnyOther() {
+        val r = Recorder()
+        val session = OkHttpTransport().open("pas un hôte/ni:une adresse", 28680, "A".repeat(43), r)
+        assertNotNull("une fin avec erreur, pas une exception", r.awaitClosed())
+        assertFalse(session.send(ToPc.Hello("tel-1", "jeton", 1, "0.1.0")))
+        session.close()
+    }
+
+    @Test
     fun eachSideCanEndTheSession() {
         FakePc(sessions = 2).use { pc ->
             val session = OkHttpTransport().open(pc.host, pc.port, spkiFingerprint(pc.certificate), recorder)

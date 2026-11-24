@@ -4,8 +4,11 @@ import fr.kingsrequin.horizon.protocol.FromPc
 import fr.kingsrequin.horizon.protocol.PROTOCOL
 import fr.kingsrequin.horizon.protocol.PairingLink
 import fr.kingsrequin.horizon.protocol.ToPc
+import fr.kingsrequin.horizon.protocol.isHostLabel
+import fr.kingsrequin.horizon.protocol.isPlainName
 import fr.kingsrequin.horizon.protocol.parseColor
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -49,6 +52,7 @@ class ConnectionManager(
     private sealed interface Event {
         data class Network(val available: Boolean) : Event
         data object AppOpened : Event
+        data class Active(val active: Boolean) : Event
 
         /** Un message attend sans session : l'occasion d'un essai. */
         data object Kick : Event
@@ -90,16 +94,55 @@ class ConnectionManager(
     /** État définitif tant qu'on n'a pas appairé de nouveau : téléphone refusé, versions incompatibles. */
     private var stopped: LinkState? = null
 
+    /** Liaison suspendue ([setActive]) : aucune session, aucun essai. */
+    private var paused = false
+
     /** La session ouverte, pour [send] (lu de n'importe quel fil). */
     @Volatile
     private var live: Session? = null
 
     init {
         scope.launch {
-            pairing = store.load()
+            pairing = try {
+                store.load()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.add(clock(), "appairage illisible : ${e.javaClass.simpleName}")
+                null
+            }
             rest()
-            for (event in events) handle(event)
+            for (event in events) {
+                // Une erreur imprévue (coffre de clés, réseau) ne doit pas arrêter la liaison, ni
+                // l'appli avec elle : l'essai en cours est lâché, la boucle continue.
+                try {
+                    handle(event)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    recover(event, e)
+                }
+            }
         }
+    }
+
+    private fun recover(event: Event, error: Exception) {
+        log.add(clock(), "erreur : ${error.javaClass.simpleName}")
+        attempt?.pair?.result?.complete(PairResult.Error)
+        (event as? Event.Pair)?.result?.complete(PairResult.Error)
+        (event as? Event.Forget)?.done?.complete(Unit)
+        abort()
+        rest()
+    }
+
+    /**
+     * Suspend la liaison (`false` : session fermée, plus aucun essai) ou la reprend. Suspendue
+     * quand rien ne doit tourner : « Arrêter » dans la notification, appli fermée en mode « à
+     * l'ouverture ». Sans cela la session resterait ouverte tant que le processus vit, et le PC
+     * montrerait un téléphone « connecté » dont la batterie ne bouge plus.
+     */
+    fun setActive(active: Boolean) {
+        events.trySend(Event.Active(active))
     }
 
     /** Le réseau local est là, ou ne l'est plus. À appeler aussi au démarrage, avec l'état du moment. */
@@ -136,6 +179,12 @@ class ConnectionManager(
                 }
             }
             Event.AppOpened -> series()
+            is Event.Active -> if (event.active == paused) {
+                paused = !event.active
+                if (paused) abort()
+                rest()
+                series()
+            }
             Event.Kick -> if (attempt == null && retry == null) round(single = true)
             Event.Retry -> {
                 retry = null
@@ -150,7 +199,10 @@ class ConnectionManager(
                 val link = event.link
                 // Les adresses du code seulement : un nom à résoudre pourrait mener ailleurs que sur le
                 // réseau local, et le code vient d'être affiché par le PC, ses adresses sont fraîches.
-                start(Attempt(link.hosts.distinct(), pairing?.deviceId ?: UUID.randomUUID().toString(), event, single = true))
+                // L'identifiant de ce téléphone n'est repris que pour le même PC (même clé) : montré à
+                // un autre, il servirait à se faire passer pour ce téléphone auprès du premier.
+                val deviceId = pairing?.takeIf { it.fingerprint == link.fingerprint }?.deviceId ?: UUID.randomUUID().toString()
+                start(Attempt(link.hosts.distinct(), deviceId, event, single = true))
             }
             is Event.Forget -> {
                 abort()
@@ -177,9 +229,11 @@ class ConnectionManager(
     /** Un essai de session avec le PC appairé. `single` : sans suite s'il échoue. */
     private fun round(single: Boolean) {
         val p = pairing ?: return
-        if (!network || stopped != null || attempt != null) return
+        if (paused || !network || stopped != null || attempt != null) return
         if (!single) current.value = LinkState.Connecting(p.pcName)
-        start(Attempt((listOfNotNull(p.lastHost) + p.hosts + "${p.hostName}.local").distinct(), p.deviceId, pair = null, single))
+        // Le nom du PC ne sert d'adresse que s'il peut en être une.
+        val byName = "${p.hostName}.local".takeIf { isHostLabel(p.hostName) }
+        start(Attempt((listOfNotNull(p.lastHost) + p.hosts + listOfNotNull(byName)).distinct(), p.deviceId, pair = null, single))
     }
 
     private fun start(a: Attempt) {
@@ -225,7 +279,9 @@ class ConnectionManager(
             }
             pair != null && msg is FromPc.PairAccepted -> {
                 val link = pair.link
-                val p = Pairing(msg.pcId, msg.pcName, link.hosts, link.name, link.port, link.fingerprint, a.deviceId, msg.deviceToken, lastHost = a.host)
+                // Le nom que donne le PC n'est gardé que s'il est montrable ; sinon celui du code.
+                val name = msg.pcName.takeIf(::isPlainName) ?: link.name
+                val p = Pairing(msg.pcId, name, link.hosts, link.name, link.port, link.fingerprint, a.deviceId, msg.deviceToken, lastHost = a.host)
                 store.save(p)
                 pairing = p
                 stopped = null
@@ -235,20 +291,22 @@ class ConnectionManager(
                 // La session d'appairage ne dit ni les fonctions ni la couleur du PC : on la ferme
                 // et on en ouvre une vraie, avec le jeton reçu.
                 release(a)
-                pair.result.complete(PairResult.Paired(msg.pcName))
+                pair.result.complete(PairResult.Paired(name))
                 rest()
                 series()
             }
             pair != null && msg is FromPc.PairRejected -> {
-                log.add(clock(), "appairage refusé : ${msg.reason}")
+                log.add(clock(), "appairage refusé : ${known(msg.reason, "expired", "used", "unknown")}")
                 release(a)
                 pair.result.complete(PairResult.Refused(msg.reason))
+                // Le PC déjà relié, s'il y en a un, revient.
                 rest()
+                series()
             }
             pair == null && msg is FromPc.HelloOk -> connected(a, msg)
             pair == null && msg is FromPc.HelloRejected -> {
                 val p = pairing ?: return
-                log.add(clock(), "refusé par le PC : ${msg.reason}")
+                log.add(clock(), "refusé par le PC : ${known(msg.reason, "unknown_device", "bad_token", "protocol")}")
                 release(a)
                 stopped = when (msg.reason) {
                     "unknown_device", "bad_token" -> LinkState.Rejected(p.pcName)
@@ -268,11 +326,12 @@ class ConnectionManager(
         retry = null
         backoff = 0
         offlineSince = null
-        if (p.lastHost != a.host || p.pcName != ok.pcName) {
-            pairing = p.copy(lastHost = a.host, pcName = ok.pcName).also { store.save(it) }
+        val name = ok.pcName.takeIf(::isPlainName) ?: p.pcName
+        if (p.lastHost != a.host || p.pcName != name) {
+            pairing = p.copy(lastHost = a.host, pcName = name).also { store.save(it) }
         }
         live = a.session
-        current.value = LinkState.Connected(ok.pcName, parseColor(ok.accent) ?: DEFAULT_ACCENT, ok.features.toSet())
+        current.value = LinkState.Connected(name, parseColor(ok.accent) ?: DEFAULT_ACCENT, ok.features.toSet())
         log.add(clock(), "connecté (${a.rank})")
         onConnected?.invoke()
     }
@@ -299,7 +358,8 @@ class ConnectionManager(
         val pair = a.pair
         if (pair != null) {
             pair.result.complete(if (a.sawWrongPc) PairResult.WrongPc else PairResult.Unreachable)
-            return rest()
+            rest()
+            return series()
         }
         val p = pairing ?: return rest()
         if (!a.single && backoff < BACKOFF_S.size) {
@@ -340,6 +400,7 @@ class ConnectionManager(
         current.value = when {
             p == null -> LinkState.NotPaired
             stopped != null -> stopped!!
+            paused -> LinkState.Offline(p.pcName, OfflineReason.Paused, since())
             !network -> LinkState.Offline(p.pcName, OfflineReason.NoNetwork, since())
             else -> LinkState.Offline(p.pcName, OfflineReason.Unreachable, since())
         }
@@ -357,6 +418,9 @@ class ConnectionManager(
         is WrongPc -> "ce n'est pas le PC appairé"
         else -> error.javaClass.simpleName
     }
+
+    /** Une raison donnée par le PC, pour le journal : telle quelle si elle est connue, jamais un texte libre. */
+    private fun known(reason: String, vararg reasons: String): String = if (reason in reasons) reason else "autre raison"
 
     private companion object {
         /** Temps laissé au PC pour répondre au premier message, connexion comprise. */

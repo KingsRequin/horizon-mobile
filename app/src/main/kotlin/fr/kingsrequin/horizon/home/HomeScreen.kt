@@ -64,6 +64,7 @@ fun HomeScreen(state: LinkState, lastSentMs: Long?, nowMs: Long, advice: Advice?
             OfflineReason.NoNetwork -> stringResource(R.string.status_no_wifi)
             OfflineReason.WrongPc -> stringResource(R.string.status_wrong_pc)
             OfflineReason.Incompatible -> stringResource(R.string.status_incompatible)
+            OfflineReason.Paused -> stringResource(R.string.status_paused)
             OfflineReason.Unreachable -> stringResource(R.string.status_offline_seen, agoOf(nowMs - state.sinceMs).text(res).replaceFirstChar(Char::lowercase))
         }
     }

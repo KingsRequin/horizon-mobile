@@ -308,6 +308,81 @@ class ConnectionManagerTest {
     }
 
     @Test
+    fun aPausedLinkClosesAndTriesNothingUntilResumed() = runTest {
+        // « Arrêter » dans la notification, ou l'appli qui quitte l'écran en mode « à l'ouverture » :
+        // la session se ferme pour de bon, sinon le PC afficherait un téléphone « connecté » figé.
+        val t = FakeTransport(reachable = setOf(PC))
+        val m = manager(paired(), t)
+        m.onNetwork(true); runCurrent()
+        m.setActive(false); runCurrent()
+        assertFalse(t.open)
+        assertEquals(LinkState.Offline("Bureau", OfflineReason.Paused, 0), m.state.value)
+        m.onNetwork(true); m.onAppOpened(); m.send(battery); advanceTimeBy(3_600_000)
+        assertEquals("en pause : aucun essai", 1, t.rounds)
+        m.setActive(true); runCurrent()
+        assertTrue(m.state.value is LinkState.Connected)
+        assertEquals(2, t.rounds)
+    }
+
+    @Test
+    fun aFailureWhileSavingDoesNotKillTheLink() = runTest {
+        // Le coffre de clés d'Android peut refuser d'écrire : l'appairage échoue proprement,
+        // la boucle de la liaison continue (une exception non attrapée arrêterait l'appli).
+        val broken = object : PairingStore {
+            override suspend fun load(): Pairing? = null
+            override suspend fun save(p: Pairing): Unit = throw IllegalStateException("coffre indisponible")
+            override suspend fun clear() = Unit
+        }
+        val m = manager(broken, FakeTransport(reachable = setOf(PC)))
+        m.onNetwork(true)
+        assertEquals(PairResult.Error, m.pair(link))
+        assertEquals(LinkState.NotPaired, m.state.value)
+        assertEquals("la liaison répond encore", PairResult.Error, m.pair(link))
+    }
+
+    @Test
+    fun aPcNameThatIsNotAHostNameIsNotResolved() = runTest {
+        val t = FakeTransport(reachable = emptySet())
+        val m = manager(MemoryStore(Pairing("pc-1", "Mon PC", listOf(PC), "Mon PC/x", 28680, "empreinte", "tel-1", "jeton", null)), t)
+        m.onNetwork(true); runCurrent()
+        assertEquals(listOf(PC), t.tried)
+    }
+
+    @Test
+    fun aFailedPairingBringsTheCurrentLinkBack() = runTest {
+        val store = paired()
+        val t = FakeTransport(reachable = setOf(PC), pairReply = FromPc.PairRejected("expired"))
+        val m = manager(store, t)
+        m.onNetwork(true); runCurrent()
+        assertEquals(PairResult.Refused("expired"), m.pair(link))
+        runCurrent()
+        assertTrue("le PC déjà relié revient", m.state.value is LinkState.Connected)
+        assertEquals("jeton", store.pairing!!.deviceToken)
+    }
+
+    @Test
+    fun anotherPcGetsAnotherPhoneIdentifier() = runTest {
+        // L'identifiant donné à un PC n'est pas montré à un autre : il servirait à se faire
+        // passer pour ce téléphone auprès du premier.
+        val store = paired()
+        val m = manager(store, FakeTransport(reachable = setOf(PC)))
+        m.onNetwork(true); runCurrent()
+        assertEquals(PairResult.Paired("Bureau"), m.pair(link.copy(fingerprint = "autre-cle")))
+        assertFalse(store.pairing!!.deviceId == "tel-1")
+        assertEquals(36, store.pairing!!.deviceId.length)
+    }
+
+    @Test
+    fun theNameGivenByThePcIsShownOnlyIfItIsPlain() = runTest {
+        val store = paired()
+        val t = FakeTransport(reachable = setOf(PC), reply = FromPc.HelloOk("pc-1", "x".repeat(300), 1, listOf("battery"), "#f97316"))
+        val m = manager(store, t)
+        m.onNetwork(true); runCurrent()
+        assertEquals("Bureau", (m.state.value as LinkState.Connected).pcName)
+        assertEquals("Bureau", store.pairing!!.pcName)
+    }
+
+    @Test
     fun forgettingThePcClosesEverything() = runTest {
         val store = paired()
         val t = FakeTransport(reachable = setOf(PC))
@@ -339,12 +414,12 @@ class ConnectionManagerTest {
         // Le journal part dans le rapport de diagnostic, collé en public : il ne reçoit donc ni
         // adresse, ni nom du PC, ni message d'erreur (qui les répète), seulement un rang et un genre.
         val log = LinkLog()
-        val store = MemoryStore(Pairing("pc-1", "Mon PC", listOf(PC, "10.0.0.5"), "Mon PC", 28680, "empreinte", "tel-1", "jeton", "192.168.1.60"))
+        val store = MemoryStore(Pairing("pc-1", "Mon PC", listOf(PC, "10.0.0.5"), "MON-PC", 28680, "empreinte", "tel-1", "jeton", "192.168.1.60"))
         val t = FakeTransport(reachable = emptySet(), wrongPc = setOf("10.0.0.5"))
         val m = ConnectionManager(store, t, clock = { currentTime }, scope = backgroundScope, deviceName = { "Pixel" }, appVersion = "0.1.0", log = log)
         runCurrent(); m.onNetwork(true); advanceTimeBy(200_000)
         val lines = log.lines()
         assertTrue(lines.toString(), lines.any { it.endsWith("adresse 1 : IOException") } && lines.any { it.endsWith("adresse 4 : IOException") })
-        for (never in listOf("192.168", "10.0.0.5", "Mon", "PC.local", "injoignable")) assertFalse("$never dans $lines", lines.any { never in it })
+        for (never in listOf("192.168", "10.0.0.5", "Mon", "MON-PC", ".local", "injoignable")) assertFalse("$never dans $lines", lines.any { never in it })
     }
 }

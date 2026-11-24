@@ -41,6 +41,9 @@ class KeystorePairingStore(context: Context) : PairingStore {
                 null
             } catch (_: GeneralSecurityException) {
                 null
+            } catch (_: RuntimeException) {
+                // Le coffre de clés signale certaines pannes par des erreurs non déclarées.
+                null
             }
         }
     }
@@ -75,7 +78,14 @@ class KeystorePairingStore(context: Context) : PairingStore {
 
     private fun key(): SecretKey {
         val keystore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
-        (keystore.getKey(ALIAS, null) as? SecretKey)?.let { return it }
+        try {
+            (keystore.getKey(ALIAS, null) as? SecretKey)?.let { return it }
+        } catch (_: GeneralSecurityException) {
+            // Clé devenue inutilisable : elle est remplacée (l'ancien fichier ne se lira plus).
+            keystore.deleteEntry(ALIAS)
+        } catch (_: RuntimeException) {
+            keystore.deleteEntry(ALIAS)
+        }
         val spec = KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)

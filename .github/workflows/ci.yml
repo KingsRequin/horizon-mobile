@@ -45,9 +45,10 @@ jobs:
       - name: Tests, lint, APK, un seul APK pour tous les processeurs
         shell: pwsh
         env:
-          HM_KEYSTORE_PASSWORD: ${{ secrets.HM_KEYSTORE_PASSWORD }}
-          HM_KEY_ALIAS: ${{ secrets.HM_KEY_ALIAS }}
-          HM_KEY_PASSWORD: ${{ secrets.HM_KEY_PASSWORD }}
+          # Les mots de passe de la clé ne sont donnés qu'à la compilation d'une version.
+          HM_KEYSTORE_PASSWORD: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.HM_KEYSTORE_PASSWORD || '' }}
+          HM_KEY_ALIAS: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.HM_KEY_ALIAS || '' }}
+          HM_KEY_PASSWORD: ${{ startsWith(github.ref, 'refs/tags/v') && secrets.HM_KEY_PASSWORD || '' }}
         run: ./tools/verifier.ps1
 
       - name: APK de la version

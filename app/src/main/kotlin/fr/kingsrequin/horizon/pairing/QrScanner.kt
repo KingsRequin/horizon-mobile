@@ -42,7 +42,8 @@ fun QrScanner(onQr: (String) -> Unit, modifier: Modifier = Modifier) {
             val preview = Preview.Builder().build().also { it.surfaceProvider = view.surfaceProvider }
             val analysis = ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()
             analysis.setAnalyzer(analyser) { image ->
-                val text = image.use { decodeQr(luminance(it), it.width, it.height) }
+                // Une image que le décodeur ne supporte pas est sautée, comme une image sans code.
+                val text = image.use { runCatching { decodeQr(luminance(it), it.width, it.height) }.getOrNull() }
                 if (text != null) main.execute { callback(text) }
             }
             try {

@@ -49,6 +49,10 @@ object Link {
     @Volatile
     private var appVisible = false
 
+    /** « Arrêter » de la notification : jusqu'à la prochaine ouverture de l'appli. */
+    @Volatile
+    private var stoppedByUser = false
+
     /** Mode de liaison choisi ; le changer démarre ou arrête le service. */
     var mode: LinkMode
         get() = linkModeOf(app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_MODE, null))
@@ -78,7 +82,14 @@ object Link {
     /** L'appli vient à l'écran, ou le quitte. */
     fun setAppVisible(visible: Boolean) {
         appVisible = visible
+        if (visible) stoppedByUser = false
+        apply()
         if (visible) manager.onAppOpened()
+    }
+
+    /** Arrête la liaison et son service jusqu'à la prochaine ouverture de l'appli. */
+    fun stop() {
+        stoppedByUser = true
         apply()
     }
 
@@ -95,7 +106,10 @@ object Link {
         val state = manager.state.value
         if (state is LinkState.Starting) return
         val service = Intent(app, LinkService::class.java)
-        if (shouldRun(mode, paired(state), appVisible)) {
+        val run = !stoppedByUser && shouldRun(mode, paired(state), appVisible)
+        // Sans PC appairé il n'y a rien à suspendre, et l'appairage doit pouvoir se faire.
+        manager.setActive(run || !paired(state))
+        if (run) {
             try {
                 ContextCompat.startForegroundService(app, service)
             } catch (e: IllegalStateException) {

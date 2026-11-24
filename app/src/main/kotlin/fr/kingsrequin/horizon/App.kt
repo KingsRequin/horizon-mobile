@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,6 +88,9 @@ fun App(pairingLink: MutableStateFlow<String?>) {
             pairingLink.value = null
         }
     }
+
+    // Un nouvel appairage demandé depuis l'accueil s'abandonne par le retour.
+    BackHandler(enabled = pairAgain && step == PairingStep.Intro) { pairAgain = false }
 
     HorizonTheme(seed) {
         val inPairing = state is LinkState.NotPaired || pairAgain || (step != PairingStep.Intro && step != PairingStep.Done)

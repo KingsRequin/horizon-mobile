@@ -31,6 +31,7 @@ fun lastExitReason(context: Context): String? {
         ApplicationExitInfo.REASON_USER_STOPPED -> "user_stopped"
         else -> "reason_${exit.reason}"
     }
-    // La description du système dit souvent qui a tué le processus (« kill background », nom du nettoyeur).
-    return listOfNotNull(reason, exit.description?.takeIf { it.isNotBlank() }).joinToString(" : ")
+    // Le code seulement : la description libre du système peut nommer d'autres applis du téléphone,
+    // et cette valeur part dans le rapport de diagnostic.
+    return reason
 }

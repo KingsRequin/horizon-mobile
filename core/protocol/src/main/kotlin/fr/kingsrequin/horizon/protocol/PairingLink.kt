@@ -74,14 +74,23 @@ private const val MAX_NAME = 64
  */
 private fun isLocalIpv4(host: String): Boolean {
     val parts = host.split('.')
-    if (parts.size != 4 || !parts.all { part -> part.length in 1..3 && part.all(Char::isDigit) && part.toInt() <= 255 }) return false
+    // Pas de zéro en tête : certains lecteurs d'adresses liraient « 010 » en octal, donc ailleurs.
+    fun octet(part: String) = part.length in 1..3 && part.all(Char::isDigit) && (part.length == 1 || part[0] != '0') && part.toInt() <= 255
+    if (parts.size != 4 || !parts.all(::octet)) return false
     val (a, b) = parts[0].toInt() to parts[1].toInt()
     return a == 10 || (a == 172 && b in 16..31) || (a == 192 && b == 168) || (a == 169 && b == 254)
 }
 
 /** Un nom de PC montrable tel quel : court, sans caractère de contrôle ni de mise en forme invisible. */
-private fun isPlainName(name: String): Boolean =
+fun isPlainName(name: String): Boolean =
     name.isNotEmpty() && name.length <= MAX_NAME && name.none { it.isISOControl() || Character.getType(it) == Character.FORMAT.toInt() }
+
+/**
+ * Un nom qui peut servir de nom d'hôte (`<nom>.local`) : lettres sans accent, chiffres et
+ * tirets, 63 caractères au plus. Tout autre nom n'est que montré, jamais mis dans une adresse.
+ */
+fun isHostLabel(name: String): Boolean =
+    name.length in 1..63 && name.all { it in 'a'..'z' || it in 'A'..'Z' || it in '0'..'9' || it == '-' } && name.first() != '-' && name.last() != '-'
 
 /** `#rrggbb` → couleur ARGB opaque ; `null` si ce n'en est pas une. */
 fun parseColor(hex: String): Int? {

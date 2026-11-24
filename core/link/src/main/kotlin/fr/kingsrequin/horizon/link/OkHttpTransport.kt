@@ -2,6 +2,7 @@ package fr.kingsrequin.horizon.link
 
 import fr.kingsrequin.horizon.protocol.Codec
 import fr.kingsrequin.horizon.protocol.ToPc
+import java.net.Proxy
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.SocketFactory
@@ -25,6 +26,10 @@ class OkHttpTransport(private val bind: (SocketFactory) -> SocketFactory = { it 
         // Poignées de main TLS et WebSocket ; une session ouverte n'a pas de délai de lecture.
         .readTimeout(CONNECT_SECONDS, TimeUnit.SECONDS)
         .retryOnConnectionFailure(false)
+        // Le PC est sur le réseau local : ni proxy du Wi-Fi, ni redirection à suivre.
+        .proxy(Proxy.NO_PROXY)
+        .followRedirects(false)
+        .followSslRedirects(false)
         .build()
 
     override fun open(host: String, port: Int, fingerprint: String, listener: SessionListener): Session {
@@ -40,8 +45,15 @@ class OkHttpTransport(private val bind: (SocketFactory) -> SocketFactory = { it 
         fun end(error: Throwable?) {
             if (ended.compareAndSet(false, true)) listener.onClosed(error)
         }
+        val request = try {
+            Request.Builder().url("https://$host:$port/").build()
+        } catch (e: IllegalArgumentException) {
+            // Un hôte qui ne s'écrit pas dans une adresse : un échec comme un autre, pas une exception.
+            end(e)
+            return Closed
+        }
         val socket = client.newWebSocket(
-            Request.Builder().url("https://$host:$port/").build(),
+            request,
             object : WebSocketListener() {
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     if (!ended.get()) Codec.decode(text)?.let(listener::onMessage)
@@ -75,6 +87,13 @@ class OkHttpTransport(private val bind: (SocketFactory) -> SocketFactory = { it 
         if (error is WrongPc) return error
         if (depth >= MAX_DEPTH) return null
         return (listOfNotNull(error.cause) + error.suppressed).firstNotNullOfOrNull { wrongPc(it, depth + 1) }
+    }
+
+    /** Une session qui n'a jamais pu s'ouvrir. */
+    private object Closed : Session {
+        override fun send(msg: ToPc): Boolean = false
+
+        override fun close() = Unit
     }
 
     private companion object {

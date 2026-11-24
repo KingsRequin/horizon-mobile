@@ -80,6 +80,7 @@ fun PairingFlow(viewModel: PairingViewModel, onDone: () -> Unit) {
         onScan = { camera.launch(Manifest.permission.CAMERA) },
         onRetry = viewModel::retry,
         onConfirm = viewModel::confirm,
+        onCancel = viewModel::cancel,
         onOpenSettings = { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))) },
         onChoose = { mode ->
             if (mode == LinkMode.Continuous && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -99,6 +100,7 @@ fun PairingScreen(
     onScan: () -> Unit,
     onRetry: () -> Unit,
     onConfirm: () -> Unit,
+    onCancel: () -> Unit,
     onOpenSettings: () -> Unit,
     onChoose: (LinkMode) -> Unit,
     scanner: @Composable (Modifier) -> Unit,
@@ -128,7 +130,7 @@ fun PairingScreen(
                 Title(stringResource(R.string.pairing_confirm_title))
                 Problem(stringResource(R.string.pairing_confirm, step.pcName, step.hosts.joinToString(", "), step.port))
                 Bouton(stringResource(R.string.pairing_confirm_yes), onConfirm)
-                Bouton(stringResource(R.string.pairing_cancel), onRetry, primary = false)
+                Bouton(stringResource(R.string.pairing_cancel), onCancel, primary = false)
             }
             PairingStep.Connecting -> {
                 Title(stringResource(R.string.pairing_title))
@@ -231,7 +233,7 @@ private fun Viewfinder(hint: Int?, scanner: @Composable (Modifier) -> Unit) {
 
 @Composable
 private fun StepPreview(step: PairingStep) = HorizonTheme {
-    PairingScreen(step, {}, {}, {}, {}, {}) { Box(it.background(Color(0xFF2A2A2A))) }
+    PairingScreen(step, {}, {}, {}, {}, {}, {}) { Box(it.background(Color(0xFF2A2A2A))) }
 }
 
 @Preview(name = "1. Explication", widthDp = 360, heightDp = 640)

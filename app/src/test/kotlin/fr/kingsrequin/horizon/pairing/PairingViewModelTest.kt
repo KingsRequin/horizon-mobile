@@ -54,6 +54,7 @@ class PairingViewModelTest {
             PairResult.Refused("autre chose") to R.string.pairing_refused,
             PairResult.Unreachable to R.string.pairing_unreachable,
             PairResult.WrongPc to R.string.pairing_wrong_pc,
+            PairResult.Error to R.string.pairing_error,
         )
         for ((result, message) in outcomes) {
             val vm = viewModel(pairResult = result); vm.start(); vm.onCameraPermission(true); vm.onQr(goodLink); advanceUntilIdle()
@@ -100,9 +101,13 @@ class PairingViewModelTest {
     @Test
     fun aLinkFromOutsideCanBeDeclinedOrIgnored() = runTest {
         val declined = viewModel()
+        declined.start(); declined.onCameraPermission(true)
         declined.onLink(goodLink)
-        declined.retry()
-        assertEquals(PairingStep.Intro, declined.step.value)
+        // Un second lien n'écrase pas celui qui est à l'écran : on n'accepte que ce qu'on a lu.
+        declined.onLink(goodLink.replace("Bureau", "Autre"))
+        assertEquals(PairingStep.Confirm("Bureau", listOf("192.168.1.49"), 28680), declined.step.value)
+        declined.cancel()
+        assertEquals("refuser ne lance pas le viseur", PairingStep.Intro, declined.step.value)
         declined.confirm(); advanceUntilIdle()
         assertEquals("un lien refusé ne peut plus être accepté", 0, asked.size)
         val other = viewModel()

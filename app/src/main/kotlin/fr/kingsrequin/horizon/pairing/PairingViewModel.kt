@@ -84,7 +84,8 @@ class PairingViewModel(
      * une demande ([PairingStep.Confirm]) que seule la personne peut accepter ([confirm]).
      */
     fun onLink(text: String) {
-        if (current.value is PairingStep.Connecting || current.value is PairingStep.ChooseMode) return
+        // Ni pendant un appairage, ni par-dessus une demande déjà à l'écran : on n'accepte que ce qu'on a lu.
+        if (current.value is PairingStep.Connecting || current.value is PairingStep.ChooseMode || current.value is PairingStep.Confirm) return
         when (val read = parsePairingLink(text)) {
             is QrResult.Ok -> {
                 pending = read.link
@@ -94,6 +95,12 @@ class PairingViewModel(
             is QrResult.Unsupported -> current.value = PairingStep.Failed(R.string.pairing_version)
             QrResult.NotHorizon -> Unit
         }
+    }
+
+    /** La personne refuse le lien reçu de l'extérieur : retour au début, sans viseur. */
+    fun cancel() {
+        pending = null
+        current.value = PairingStep.Intro
     }
 
     /** La personne accepte le lien reçu de l'extérieur. */
@@ -117,6 +124,7 @@ class PairingViewModel(
                 )
                 PairResult.Unreachable -> PairingStep.Failed(R.string.pairing_unreachable)
                 PairResult.WrongPc -> PairingStep.Failed(R.string.pairing_wrong_pc)
+                PairResult.Error -> PairingStep.Failed(R.string.pairing_error)
             }
         }
     }
