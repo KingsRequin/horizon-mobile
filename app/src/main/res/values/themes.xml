@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Toujours sombre : ce que la fenêtre montre avant le premier rendu de Compose. -->
+    <style name="Theme.HorizonMobile" parent="android:Theme.Material.NoActionBar" />
+</resources>
