@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Le H d'Horizon (docs/images/logo.svg du dépôt d'Horizon), en une couleur pour la barre d'état. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,6H18V9A6,6 0,0 0,30 9V6H36A6,6 0,0 1,42 12V36A6,6 0,0 1,36 42H30V30A6,6 0,0 0,18 30V42H12A6,6 0,0 1,6 36V12A6,6 0,0 1,12 6Z" />
+</vector>

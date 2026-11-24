@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="link_channel">Liaison avec le PC</string>
+    <string name="link_connected">Relié à %1$s</string>
+    <string name="link_connecting">Reconnexion à %1$s…</string>
+    <string name="link_offline">%1$s hors ligne</string>
+    <string name="link_stop">Arrêter</string>
+</resources>
