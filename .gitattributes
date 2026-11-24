@@ -1,0 +1,6 @@
+# Fins de ligne LF partout (gradlew doit tourner sous Linux) ; CRLF pour les scripts de Windows.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.webp binary
+*.png binary
