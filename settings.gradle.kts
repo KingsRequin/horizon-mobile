@@ -28,6 +28,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "horizon-mobile"
 
-// core:protocol : Kotlin pur (messages, lecture du QR). core:design : la charte. core:connection :
-// liaison avec le PC. app : les écrans.
-include(":app", ":core:protocol", ":core:design", ":core:connection")
+// core:protocol : Kotlin pur (messages, lecture du QR). core:link : Kotlin pur aussi (session TLS
+// épinglée, reprise de la liaison), testé sur la JVM. core:design : la charte. core:connection : ce
+// que la liaison demande à Android (coffre de clés, service, réseau). app : les écrans.
+include(":app", ":core:protocol", ":core:link", ":core:design", ":core:connection")
