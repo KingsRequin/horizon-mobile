@@ -12,6 +12,10 @@
     <string name="pairing_not_horizon">Ce code ne vient pas d\'Horizon.</string>
     <string name="pairing_malformed">Ce code d\'Horizon est incomplet. Affiches-en un nouveau.</string>
     <string name="pairing_version">Mets Horizon ou l\'appli à jour : ils ne parlent pas la même version.</string>
+    <string name="pairing_confirm_title">Relier ce PC ?</string>
+    <string name="pairing_confirm">Un lien demande de relier ton téléphone à « %1$s » (%2$s). N\'accepte que si tu viens d\'ouvrir le code affiché par ton propre Horizon. Un PC déjà relié sera remplacé.</string>
+    <string name="pairing_confirm_yes">Relier</string>
+    <string name="pairing_cancel">Annuler</string>
     <string name="pairing_connecting">Connexion au PC…</string>
     <string name="pairing_unreachable">PC introuvable. Vérifie que le téléphone est sur le même Wi-Fi.</string>
     <string name="pairing_expired">Ce code a expiré. Affiches-en un nouveau dans Horizon.</string>

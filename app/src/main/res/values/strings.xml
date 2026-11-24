@@ -14,6 +14,10 @@
     <string name="pairing_not_horizon">This code is not from Horizon.</string>
     <string name="pairing_malformed">This Horizon code is incomplete. Show a new one.</string>
     <string name="pairing_version">Update Horizon or the app: they do not speak the same version.</string>
+    <string name="pairing_confirm_title">Link this PC?</string>
+    <string name="pairing_confirm">A link asks to link your phone to “%1$s” (%2$s). Accept only if you have just opened the code shown by your own Horizon. A PC that is already linked will be replaced.</string>
+    <string name="pairing_confirm_yes">Link</string>
+    <string name="pairing_cancel">Cancel</string>
     <string name="pairing_connecting">Connecting to the PC…</string>
     <string name="pairing_unreachable">PC not found. Check that the phone is on the same Wi-Fi.</string>
     <string name="pairing_expired">This code has expired. Show a new one in Horizon.</string>

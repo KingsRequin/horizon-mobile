@@ -80,15 +80,39 @@ class PairingViewModelTest {
     }
 
     @Test
-    fun aLinkOpenedFromOutsideSkipsTheCamera() = runTest {
+    fun aLinkOpenedFromOutsideAsksBeforePairing() = runTest {
+        // Une page web ou une autre appli peut ouvrir un tel lien : rien ne part sans un appui
+        // de la personne, qui voit à quel PC et à quelle adresse le lien veut la relier.
         val vm = viewModel()
         vm.onLink(goodLink); advanceUntilIdle()
+        assertEquals(PairingStep.Confirm("Bureau", "192.168.1.49"), vm.step.value)
+        assertEquals("rien n'est envoyé avant l'accord", 0, asked.size)
+        vm.confirm()
+        assertEquals(PairingStep.Connecting, vm.step.value)
+        advanceUntilIdle()
         assertEquals(PairingStep.ChooseMode("Bureau"), vm.step.value)
+        assertEquals(1, asked.size)
+        vm.onLink(goodLink.replace("Bureau", "Autre")); vm.confirm(); advanceUntilIdle()
+        assertEquals("un lien reçu pendant le choix du mode est ignoré", PairingStep.ChooseMode("Bureau"), vm.step.value)
+        assertEquals(1, asked.size)
+    }
+
+    @Test
+    fun aLinkFromOutsideCanBeDeclinedOrIgnored() = runTest {
+        val declined = viewModel()
+        declined.onLink(goodLink)
+        declined.retry()
+        assertEquals(PairingStep.Intro, declined.step.value)
+        declined.confirm(); advanceUntilIdle()
+        assertEquals("un lien refusé ne peut plus être accepté", 0, asked.size)
         val other = viewModel()
         other.onLink("https://exemple.fr")
         assertEquals("un lien qui n'est pas d'Horizon ne change rien", PairingStep.Intro, other.step.value)
+        other.confirm(); advanceUntilIdle()
+        assertEquals(0, asked.size)
         val failed = viewModel(pairResult = PairResult.Unreachable)
-        failed.onLink(goodLink); advanceUntilIdle()
+        failed.onLink(goodLink); failed.confirm(); advanceUntilIdle()
+        assertEquals(PairingStep.Failed(R.string.pairing_unreachable), failed.step.value)
         failed.retry()
         assertEquals("sans caméra accordée, on revient au début", PairingStep.Intro, failed.step.value)
     }

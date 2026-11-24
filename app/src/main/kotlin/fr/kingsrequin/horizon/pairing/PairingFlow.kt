@@ -79,6 +79,7 @@ fun PairingFlow(viewModel: PairingViewModel, onDone: () -> Unit) {
         step = step,
         onScan = { camera.launch(Manifest.permission.CAMERA) },
         onRetry = viewModel::retry,
+        onConfirm = viewModel::confirm,
         onOpenSettings = { context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))) },
         onChoose = { mode ->
             if (mode == LinkMode.Continuous && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -97,6 +98,7 @@ fun PairingScreen(
     step: PairingStep,
     onScan: () -> Unit,
     onRetry: () -> Unit,
+    onConfirm: () -> Unit,
     onOpenSettings: () -> Unit,
     onChoose: (LinkMode) -> Unit,
     scanner: @Composable (Modifier) -> Unit,
@@ -121,6 +123,12 @@ fun PairingScreen(
                 Problem(stringResource(R.string.pairing_camera_denied))
                 Bouton(stringResource(R.string.pairing_open_settings), onOpenSettings)
                 Bouton(stringResource(R.string.pairing_retry), onScan, primary = false)
+            }
+            is PairingStep.Confirm -> {
+                Title(stringResource(R.string.pairing_confirm_title))
+                Problem(stringResource(R.string.pairing_confirm, step.pcName, step.host))
+                Bouton(stringResource(R.string.pairing_confirm_yes), onConfirm)
+                Bouton(stringResource(R.string.pairing_cancel), onRetry, primary = false)
             }
             PairingStep.Connecting -> {
                 Title(stringResource(R.string.pairing_title))
@@ -223,7 +231,7 @@ private fun Viewfinder(hint: Int?, scanner: @Composable (Modifier) -> Unit) {
 
 @Composable
 private fun StepPreview(step: PairingStep) = HorizonTheme {
-    PairingScreen(step, {}, {}, {}, {}) { Box(it.background(Color(0xFF2A2A2A))) }
+    PairingScreen(step, {}, {}, {}, {}, {}) { Box(it.background(Color(0xFF2A2A2A))) }
 }
 
 @Preview(name = "1. Explication", widthDp = 360, heightDp = 640)
@@ -237,6 +245,10 @@ private fun PairingCameraDenied() = StepPreview(PairingStep.CameraDenied)
 @Preview(name = "2. Viseur, mauvais code", widthDp = 360, heightDp = 640)
 @Composable
 private fun PairingScanning() = StepPreview(PairingStep.Scanning(R.string.pairing_not_horizon))
+
+@Preview(name = "Lien venu de l'extérieur", widthDp = 360, heightDp = 640)
+@Composable
+private fun PairingConfirm() = StepPreview(PairingStep.Confirm("Bureau", "192.168.1.49"))
 
 @Preview(name = "Connexion", widthDp = 360, heightDp = 640)
 @Composable

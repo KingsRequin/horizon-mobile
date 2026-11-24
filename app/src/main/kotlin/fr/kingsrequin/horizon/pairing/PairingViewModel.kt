@@ -25,6 +25,9 @@ sealed interface PairingStep {
     /** Le viseur ; `hint` : pourquoi le dernier code lu ne convient pas. */
     data class Scanning(@StringRes val hint: Int?) : PairingStep
 
+    /** Un lien venu de l'extérieur demande à relier ce PC, à cette adresse : à accepter ou non. */
+    data class Confirm(val pcName: String, val host: String) : PairingStep
+
     data object Connecting : PairingStep
 
     data class Failed(@StringRes val message: Int) : PairingStep
@@ -50,6 +53,9 @@ class PairingViewModel(
     val step: StateFlow<PairingStep> = current.asStateFlow()
     private var cameraGranted = false
 
+    /** Le lien reçu de l'extérieur, en attente d'un accord. */
+    private var pending: PairingLink? = null
+
     /** Revient au début du parcours. */
     fun start() {
         current.value = PairingStep.Intro
@@ -72,15 +78,29 @@ class PairingViewModel(
         }
     }
 
-    /** Un lien `horizon://pair` ouvert depuis ailleurs (navigateur, autre lecteur de QR). */
+    /**
+     * Un lien `horizon://pair` ouvert depuis ailleurs (navigateur, autre lecteur de QR). N'importe
+     * quelle page web ou appli peut en ouvrir un : il n'appaire donc jamais de lui-même, il amène
+     * une demande ([PairingStep.Confirm]) que seule la personne peut accepter ([confirm]).
+     */
     fun onLink(text: String) {
-        if (current.value is PairingStep.Connecting) return
+        if (current.value is PairingStep.Connecting || current.value is PairingStep.ChooseMode) return
         when (val read = parsePairingLink(text)) {
-            is QrResult.Ok -> connect(read.link)
+            is QrResult.Ok -> {
+                pending = read.link
+                current.value = PairingStep.Confirm(read.link.name, read.link.hosts.first())
+            }
             QrResult.Malformed -> current.value = PairingStep.Failed(R.string.pairing_malformed)
             is QrResult.Unsupported -> current.value = PairingStep.Failed(R.string.pairing_version)
             QrResult.NotHorizon -> Unit
         }
+    }
+
+    /** La personne accepte le lien reçu de l'extérieur. */
+    fun confirm() {
+        val link = pending ?: return
+        pending = null
+        if (current.value is PairingStep.Confirm) connect(link)
     }
 
     private fun connect(link: PairingLink) {
@@ -107,8 +127,9 @@ class PairingViewModel(
         current.value = PairingStep.Done
     }
 
-    /** Après un échec : le viseur si la caméra est accordée, sinon le début. */
+    /** Après un échec ou un lien refusé : le viseur si la caméra est accordée, sinon le début. */
     fun retry() {
+        pending = null
         current.value = if (cameraGranted) PairingStep.Scanning(null) else PairingStep.Intro
     }
 }
