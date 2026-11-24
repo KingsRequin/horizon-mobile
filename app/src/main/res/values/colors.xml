@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fond de l'icône : le `surface` de la palette orange, celle de l'appli au repos. -->
+    <color name="ic_launcher_background">#130D0A</color>
+</resources>
