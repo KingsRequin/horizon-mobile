@@ -286,6 +286,9 @@ class ConnectionManagerTest {
     fun aPairingThatReachesNobodyOrSomebodyElseSaysSo() = runTest {
         val nobody = manager(MemoryStore(null), FakeTransport(reachable = emptySet()))
         nobody.onNetwork(true)
+        val silent = FakeTransport(reachable = setOf("Bureau.local"))
+        assertEquals("un appairage n'essaie que les adresses du code, jamais un nom à résoudre", PairResult.Unreachable, manager(MemoryStore(null), silent).pair(link))
+        assertEquals(listOf(PC), silent.tried)
         assertEquals(PairResult.Unreachable, nobody.pair(link))
         val somebodyElse = manager(MemoryStore(null), FakeTransport(reachable = emptySet(), wrongPc = setOf(PC)))
         somebodyElse.onNetwork(true)

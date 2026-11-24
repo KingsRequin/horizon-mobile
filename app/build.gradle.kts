@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
     // Lecture du QR d'appairage : CameraX pour l'image, ZXing (Java pur) pour le code.
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)

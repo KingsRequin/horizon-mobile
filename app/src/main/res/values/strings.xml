@@ -15,7 +15,7 @@
     <string name="pairing_malformed">This Horizon code is incomplete. Show a new one.</string>
     <string name="pairing_version">Update Horizon or the app: they do not speak the same version.</string>
     <string name="pairing_confirm_title">Link this PC?</string>
-    <string name="pairing_confirm">A link asks to link your phone to “%1$s” (%2$s). Accept only if you have just opened the code shown by your own Horizon. A PC that is already linked will be replaced.</string>
+    <string name="pairing_confirm">A link asks to link your phone to “%1$s” (%2$s, port %3$d). Accept only if you have just opened the code shown by your own Horizon. A PC that is already linked will be replaced.</string>
     <string name="pairing_confirm_yes">Link</string>
     <string name="pairing_cancel">Cancel</string>
     <string name="pairing_connecting">Connecting to the PC…</string>
@@ -30,4 +30,10 @@
     <string name="pairing_mode_continuous_detail">The bar follows your battery even when the app is closed, with a discreet notification.</string>
     <string name="pairing_mode_when_open">Only while the app is open</string>
     <string name="pairing_mode_when_open_detail">Nothing runs in the background; the bar is only up to date when you open the app.</string>
+
+    <!-- Durations -->
+    <string name="ago_now">Just now</string>
+    <string name="ago_minutes">%1$d min ago</string>
+    <string name="ago_hours">%1$d h ago</string>
+    <string name="ago_days">%1$d d ago</string>
 </resources>

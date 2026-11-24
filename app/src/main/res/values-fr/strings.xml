@@ -13,7 +13,7 @@
     <string name="pairing_malformed">Ce code d\'Horizon est incomplet. Affiches-en un nouveau.</string>
     <string name="pairing_version">Mets Horizon ou l\'appli à jour : ils ne parlent pas la même version.</string>
     <string name="pairing_confirm_title">Relier ce PC ?</string>
-    <string name="pairing_confirm">Un lien demande de relier ton téléphone à « %1$s » (%2$s). N\'accepte que si tu viens d\'ouvrir le code affiché par ton propre Horizon. Un PC déjà relié sera remplacé.</string>
+    <string name="pairing_confirm">Un lien demande de relier ton téléphone à « %1$s » (%2$s, port %3$d). N\'accepte que si tu viens d\'ouvrir le code affiché par ton propre Horizon. Un PC déjà relié sera remplacé.</string>
     <string name="pairing_confirm_yes">Relier</string>
     <string name="pairing_cancel">Annuler</string>
     <string name="pairing_connecting">Connexion au PC…</string>
@@ -28,4 +28,10 @@
     <string name="pairing_mode_continuous_detail">La barre suit ta batterie même quand l\'appli est fermée, avec une notification discrète.</string>
     <string name="pairing_mode_when_open">Seulement quand l\'appli est ouverte</string>
     <string name="pairing_mode_when_open_detail">Rien ne tourne en arrière-plan, la barre n\'est à jour que quand tu ouvres l\'appli.</string>
+
+    <!-- Durées -->
+    <string name="ago_now">À l’instant</string>
+    <string name="ago_minutes">Il y a %1$d min</string>
+    <string name="ago_hours">Il y a %1$d h</string>
+    <string name="ago_days">Il y a %1$d j</string>
 </resources>

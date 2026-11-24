@@ -50,8 +50,8 @@ fun parsePairingLink(text: String): QrResult {
     val name = params["n"]
     val fingerprint = params["fp"].orEmpty()
     val token = params["t"].orEmpty()
-    if (hosts.isEmpty() || !hosts.all(::isIpv4) || port == null || port !in 1..65535) return QrResult.Malformed
-    if (name == null || fingerprint.isEmpty() || token.isEmpty()) return QrResult.Malformed
+    if (hosts.isEmpty() || hosts.size > MAX_HOSTS || !hosts.all(::isLocalIpv4) || port == null || port !in 1..65535) return QrResult.Malformed
+    if (name == null || !isPlainName(name) || fingerprint.isEmpty() || token.isEmpty()) return QrResult.Malformed
     return QrResult.Ok(PairingLink(hosts, name, port, fingerprint, token))
 }
 
@@ -63,11 +63,25 @@ private fun decode(value: String): String? = try {
     null
 }
 
-/** Une adresse IPv4 écrite en chiffres : jamais un nom à résoudre. */
-private fun isIpv4(host: String): Boolean {
+/** Adresses qu'un lien peut porter, et longueur du nom du PC : au-delà, ce n'est pas un lien d'Horizon. */
+private const val MAX_HOSTS = 8
+private const val MAX_NAME = 64
+
+/**
+ * Une adresse IPv4 d'un réseau local, écrite en chiffres : jamais un nom à résoudre, jamais une
+ * adresse d'Internet ni le téléphone lui-même. Ce sont les seules qu'Horizon annonce (10/8,
+ * 172.16/12, 192.168/16, 169.254/16) ; un lien qui en porte une autre est refusé, d'où qu'il vienne.
+ */
+private fun isLocalIpv4(host: String): Boolean {
     val parts = host.split('.')
-    return parts.size == 4 && parts.all { part -> part.length in 1..3 && part.all(Char::isDigit) && part.toInt() <= 255 }
+    if (parts.size != 4 || !parts.all { part -> part.length in 1..3 && part.all(Char::isDigit) && part.toInt() <= 255 }) return false
+    val (a, b) = parts[0].toInt() to parts[1].toInt()
+    return a == 10 || (a == 172 && b in 16..31) || (a == 192 && b == 168) || (a == 169 && b == 254)
 }
+
+/** Un nom de PC montrable tel quel : court, sans caractère de contrôle ni de mise en forme invisible. */
+private fun isPlainName(name: String): Boolean =
+    name.isNotEmpty() && name.length <= MAX_NAME && name.none { it.isISOControl() || Character.getType(it) == Character.FORMAT.toInt() }
 
 /** `#rrggbb` → couleur ARGB opaque ; `null` si ce n'en est pas une. */
 fun parseColor(hex: String): Int? {

@@ -126,7 +126,7 @@ fun PairingScreen(
             }
             is PairingStep.Confirm -> {
                 Title(stringResource(R.string.pairing_confirm_title))
-                Problem(stringResource(R.string.pairing_confirm, step.pcName, step.host))
+                Problem(stringResource(R.string.pairing_confirm, step.pcName, step.hosts.joinToString(", "), step.port))
                 Bouton(stringResource(R.string.pairing_confirm_yes), onConfirm)
                 Bouton(stringResource(R.string.pairing_cancel), onRetry, primary = false)
             }
@@ -248,7 +248,7 @@ private fun PairingScanning() = StepPreview(PairingStep.Scanning(R.string.pairin
 
 @Preview(name = "Lien venu de l'extérieur", widthDp = 360, heightDp = 640)
 @Composable
-private fun PairingConfirm() = StepPreview(PairingStep.Confirm("Bureau", "192.168.1.49"))
+private fun PairingConfirm() = StepPreview(PairingStep.Confirm("Bureau", listOf("192.168.1.49", "10.0.0.5"), 28680))
 
 @Preview(name = "Connexion", widthDp = 360, heightDp = 640)
 @Composable

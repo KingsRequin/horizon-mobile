@@ -145,7 +145,9 @@ class ConnectionManager(
             is Event.Pair -> {
                 abort()
                 val link = event.link
-                start(Attempt((link.hosts + "${link.name}.local").distinct(), pairing?.deviceId ?: UUID.randomUUID().toString(), event, single = true))
+                // Les adresses du code seulement : un nom à résoudre pourrait mener ailleurs que sur le
+                // réseau local, et le code vient d'être affiché par le PC, ses adresses sont fraîches.
+                start(Attempt(link.hosts.distinct(), pairing?.deviceId ?: UUID.randomUUID().toString(), event, single = true))
             }
             is Event.Forget -> {
                 abort()
@@ -225,7 +227,8 @@ class ConnectionManager(
                 pairing = p
                 stopped = null
                 offlineSince = null
-                log.add(clock(), "appairé avec ${msg.pcName}")
+                // Jamais le nom du PC dans le journal : il part dans le rapport de diagnostic.
+                log.add(clock(), "appairé")
                 // La session d'appairage ne dit ni les fonctions ni la couleur du PC : on la ferme
                 // et on en ouvre une vraie, avec le jeton reçu.
                 release(a)

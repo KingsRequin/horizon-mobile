@@ -84,14 +84,14 @@ class PairingViewModelTest {
         // Une page web ou une autre appli peut ouvrir un tel lien : rien ne part sans un appui
         // de la personne, qui voit à quel PC et à quelle adresse le lien veut la relier.
         val vm = viewModel()
-        vm.onLink(goodLink); advanceUntilIdle()
-        assertEquals(PairingStep.Confirm("Bureau", "192.168.1.49"), vm.step.value)
+        vm.onLink(goodLink.replace("h=192.168.1.49", "h=192.168.1.49,10.0.0.5")); advanceUntilIdle()
+        assertEquals("tout ce que le lien fera essayer est montré", PairingStep.Confirm("Bureau", listOf("192.168.1.49", "10.0.0.5"), 28680), vm.step.value)
         assertEquals("rien n'est envoyé avant l'accord", 0, asked.size)
         vm.confirm()
         assertEquals(PairingStep.Connecting, vm.step.value)
         advanceUntilIdle()
         assertEquals(PairingStep.ChooseMode("Bureau"), vm.step.value)
-        assertEquals(1, asked.size)
+        assertEquals(listOf("192.168.1.49", "10.0.0.5"), asked.single().hosts)
         vm.onLink(goodLink.replace("Bureau", "Autre")); vm.confirm(); advanceUntilIdle()
         assertEquals("un lien reçu pendant le choix du mode est ignoré", PairingStep.ChooseMode("Bureau"), vm.step.value)
         assertEquals(1, asked.size)

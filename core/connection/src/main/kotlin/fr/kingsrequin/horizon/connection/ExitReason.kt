@@ -21,6 +21,7 @@ fun lastExitReason(context: Context): String? {
         ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "dependency_died"
         ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "excessive_resource_usage"
         ApplicationExitInfo.REASON_EXIT_SELF -> "exit_self"
+        ApplicationExitInfo.REASON_FREEZER -> "freezer"
         ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "initialization_failure"
         ApplicationExitInfo.REASON_LOW_MEMORY -> "low_memory"
         ApplicationExitInfo.REASON_OTHER -> "other"

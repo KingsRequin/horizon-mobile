@@ -25,8 +25,8 @@ sealed interface PairingStep {
     /** Le viseur ; `hint` : pourquoi le dernier code lu ne convient pas. */
     data class Scanning(@StringRes val hint: Int?) : PairingStep
 
-    /** Un lien venu de l'extérieur demande à relier ce PC, à cette adresse : à accepter ou non. */
-    data class Confirm(val pcName: String, val host: String) : PairingStep
+    /** Un lien venu de l'extérieur demande à relier ce PC : toutes ses adresses et son port, à accepter ou non. */
+    data class Confirm(val pcName: String, val hosts: List<String>, val port: Int) : PairingStep
 
     data object Connecting : PairingStep
 
@@ -88,7 +88,7 @@ class PairingViewModel(
         when (val read = parsePairingLink(text)) {
             is QrResult.Ok -> {
                 pending = read.link
-                current.value = PairingStep.Confirm(read.link.name, read.link.hosts.first())
+                current.value = PairingStep.Confirm(read.link.name, read.link.hosts, read.link.port)
             }
             QrResult.Malformed -> current.value = PairingStep.Failed(R.string.pairing_malformed)
             is QrResult.Unsupported -> current.value = PairingStep.Failed(R.string.pairing_version)
