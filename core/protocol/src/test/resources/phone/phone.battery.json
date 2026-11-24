@@ -1,0 +1,1 @@
+{"type":"phone.battery","devices":[{"id":"phone","kind":"phone","name":"Pixel","percent":82,"charging":true,"atMs":1764000000000},{"id":"watch","kind":"watch","name":"Pixel Watch","percent":64,"charging":false,"atMs":1764000000000}]}
