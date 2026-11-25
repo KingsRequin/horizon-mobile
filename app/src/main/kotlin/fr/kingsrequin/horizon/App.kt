@@ -32,6 +32,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -131,8 +133,11 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
     }
     val update by produceState<Update?>(null) { value = checkForUpdate(context, version, System.currentTimeMillis()) }
     if (state is LinkState.Connected && !prefs.getBoolean(KEY_CONNECTED_ONCE, false)) prefs.edit { putBoolean(KEY_CONNECTED_ONCE, true) }
-    // Relu à chaque passage de l'heure : l'utilisateur revient des réglages du système.
-    val advice = remember(now, mode, state) {
+    // Relu à chaque retour à l'appli (la demande d'exemption et les réglages du système sont
+    // d'autres écrans : la carte doit tomber dès qu'on en revient), et quand l'heure passe.
+    var resumed by remember { mutableIntStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumed++ }
+    val advice = remember(now, mode, state, resumed) {
         val exempt = context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
         backgroundAdvice(mode, prefs.getBoolean(KEY_CONNECTED_ONCE, false), exempt, exitReason)
     }
