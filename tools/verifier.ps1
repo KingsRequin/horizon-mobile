@@ -5,8 +5,9 @@
 $ErrorActionPreference = 'Stop'
 Push-Location (Split-Path $PSScriptRoot)
 try {
-  $gradle = if ($IsWindows -or $env:OS -eq 'Windows_NT') { '.\gradlew.bat' } else { './gradlew' }
-  & $gradle test lint animalsnifferMain :app:assembleDebug :app:assembleRelease --console=plain
+  $tasks = @('test', 'lint', 'animalsnifferMain', ':app:assembleDebug', ':app:assembleRelease', '--console=plain')
+  # Hors de Windows, par bash : le droit d'exécution de gradlew ne dépend pas de qui a cloné.
+  if ($IsWindows -or $env:OS -eq 'Windows_NT') { & .\gradlew.bat @tasks } else { & bash ./gradlew @tasks }
   if ($LASTEXITCODE) { throw "échec : gradle (code $LASTEXITCODE)" }
   $apks = @(Get-ChildItem app/build/outputs/apk -Recurse -Filter *.apk | ForEach-Object { $_.FullName })
   if ($apks.Count -lt 2) { throw "APK attendus : debug et release ; trouvés : $($apks.Count)" }
