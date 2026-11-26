@@ -130,6 +130,36 @@ sealed interface ToPc {
     @Serializable
     @SerialName("timer.stop")
     data object TimerStop : ToPc
+
+    /** Déplacer le pointeur, en pixels. */
+    @Serializable
+    @SerialName("input.move")
+    data class InputMove(val dx: Int, val dy: Int) : ToPc
+
+    /** `button` : `left`, `right`, `middle` ; `action` : `click`, `down`, `up`. */
+    @Serializable
+    @SerialName("input.button")
+    data class InputButton(val button: String, val action: String) : ToPc
+
+    /** Défiler, en unités de molette (120 = un cran ; positif : vers le haut, vers la droite). */
+    @Serializable
+    @SerialName("input.scroll")
+    data class InputScroll(val dx: Int, val dy: Int) : ToPc
+
+    /** Zoomer (Ctrl + molette), mêmes unités. */
+    @Serializable
+    @SerialName("input.zoom")
+    data class InputZoom(val delta: Int) : ToPc
+
+    /** Taper ce texte (256 caractères au plus). */
+    @Serializable
+    @SerialName("input.text")
+    data class InputText(val text: String) : ToPc
+
+    /** Appuyer sur une touche nommée (`escape`, `f5`, `c`…) avec ses modificateurs (`ctrl`, `alt`, `shift`, `win`). */
+    @Serializable
+    @SerialName("input.key")
+    data class InputKey(val key: String, val mods: List<String> = emptyList()) : ToPc
 }
 
 /** Ce que le PC envoie. */

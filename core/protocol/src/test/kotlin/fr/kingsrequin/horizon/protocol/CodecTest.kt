@@ -63,6 +63,16 @@ class CodecTest {
     }
 
     @Test
+    fun theInputMessagesMatchTheExamples() {
+        assertEquals(json(example("input.move.json")), json(Codec.encode(ToPc.InputMove(12, -5))))
+        assertEquals(json(example("input.button.json")), json(Codec.encode(ToPc.InputButton("left", "click"))))
+        assertEquals(json(example("input.scroll.json")), json(Codec.encode(ToPc.InputScroll(0, -120))))
+        assertEquals(json(example("input.zoom.json")), json(Codec.encode(ToPc.InputZoom(120))))
+        assertEquals(json(example("input.text.json")), json(Codec.encode(ToPc.InputText("Bonjour é ☃"))))
+        assertEquals(json(example("input.key.json")), json(Codec.encode(ToPc.InputKey("c", listOf("ctrl")))))
+    }
+
+    @Test
     fun anOldPcHelloHasNoGrantedList() {
         assertEquals(FromPc.HelloOk("pc-1", "Bureau", 1, listOf("battery"), "#f97316", granted = null), Codec.decode(example("hello.ok-sans-droits.json")))
     }
