@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -38,6 +39,7 @@ import fr.kingsrequin.horizon.design.HorizonSize
 import fr.kingsrequin.horizon.design.HorizonSpace
 import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.LocalHorizonColors
+import fr.kingsrequin.horizon.design.R
 
 /** Hauteur des commandes du lecteur (`control-large`). */
 private val ControlLarge = 64.dp
@@ -67,10 +69,10 @@ fun Transport(
     var shown by remember(playing) { mutableStateOf(playing) }
     val side = HorizonShapes.largeIncreased
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(HorizonSpace.s2)) {
-        Commande(HorizonIcons.SkipBackFill, "Morceau précédent", enabled && canPrevious, colors.surfaceContainerHigh, colors.onSurface, side, Modifier.width(76.dp).height(ControlLarge), 26.dp, onPrevious)
+        Commande(HorizonIcons.SkipBackFill, stringResource(R.string.media_previous), enabled && canPrevious, colors.surfaceContainerHigh, colors.onSurface, side, Modifier.width(76.dp).height(ControlLarge), 26.dp, onPrevious)
         Commande(
             if (shown) HorizonIcons.PauseFill else HorizonIcons.PlayFill,
-            if (shown) "Pause" else "Lecture",
+            stringResource(if (shown) R.string.media_pause else R.string.media_play),
             enabled,
             colors.primary,
             colors.onPrimary,
@@ -81,7 +83,7 @@ fun Transport(
             shown = !shown
             onPlayPause()
         }
-        Commande(HorizonIcons.SkipForwardFill, "Morceau suivant", enabled && canNext, colors.surfaceContainerHigh, colors.onSurface, side, Modifier.width(76.dp).height(ControlLarge), 26.dp, onNext)
+        Commande(HorizonIcons.SkipForwardFill, stringResource(R.string.media_next), enabled && canNext, colors.surfaceContainerHigh, colors.onSurface, side, Modifier.width(76.dp).height(ControlLarge), 26.dp, onNext)
     }
 }
 

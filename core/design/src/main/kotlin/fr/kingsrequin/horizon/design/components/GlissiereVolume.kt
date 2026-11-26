@@ -29,6 +29,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -44,6 +46,7 @@ import fr.kingsrequin.horizon.design.HorizonSpace
 import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.HorizonType
 import fr.kingsrequin.horizon.design.LocalHorizonColors
+import fr.kingsrequin.horizon.design.R
 import fr.kingsrequin.horizon.design.VolumeTick
 import fr.kingsrequin.horizon.design.volumeTick
 import kotlin.math.roundToInt
@@ -74,6 +77,9 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
     val percent = (value * 100).roundToInt()
     val current by rememberUpdatedState(value)
     val send by rememberUpdatedState(onVolume)
+    val label = stringResource(R.string.volume_label)
+    val spoken = if (muted) stringResource(R.string.volume_muted) else pluralStringResource(R.plurals.volume_spoken, percent, percent)
+    val muteLabel = stringResource(if (muted) R.string.volume_unmute else R.string.volume_mute)
 
     fun change(target: Float) {
         val next = (target.coerceIn(0f, 1f) * 100).roundToInt() / 100f
@@ -99,8 +105,8 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .semantics {
-                    contentDescription = "Volume général"
-                    stateDescription = if (muted) "Muet" else "$percent pour cent"
+                    contentDescription = label
+                    stateDescription = spoken
                     progressBarRangeInfo = ProgressBarRangeInfo(value, 0f..1f, steps = 19)
                     setProgress { target ->
                         change(target)
@@ -130,12 +136,12 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
                         .padding(start = HorizonSpace.s1)
                         .size(HorizonSize.touchMin)
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable(role = Role.Button, onClickLabel = if (muted) "Rétablir le son" else "Couper le son") { onMute(!muted) },
+                        .clickable(role = Role.Button) { onMute(!muted) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         painterResource(if (muted) HorizonIcons.SpeakerSlash else HorizonIcons.SpeakerHigh),
-                        contentDescription = if (muted) "Son coupé" else "Son",
+                        contentDescription = muteLabel,
                         tint = if (muted) colors.onSurfaceVariant else colors.onPrimary,
                         modifier = Modifier.size(HorizonSize.icon),
                     )
@@ -151,7 +157,7 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
                     .padding(end = 14.dp),
                 contentAlignment = Alignment.CenterEnd,
             ) {
-                Text(if (muted) "Muet" else "$percent %", style = HorizonType.numeralSmall, color = colors.onSurfaceVariant, maxLines = 1)
+                Text(if (muted) stringResource(R.string.volume_muted) else stringResource(R.string.volume_value, percent), style = HorizonType.numeralSmall, color = colors.onSurfaceVariant, maxLines = 1)
             }
         }
     }

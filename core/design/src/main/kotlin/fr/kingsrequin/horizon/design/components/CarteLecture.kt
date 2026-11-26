@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +27,7 @@ import fr.kingsrequin.horizon.design.HorizonSpace
 import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.HorizonType
 import fr.kingsrequin.horizon.design.LocalHorizonColors
+import fr.kingsrequin.horizon.design.R
 
 /** Hauteur des boutons de la carte (`control`). */
 private val Control = 48.dp
@@ -53,7 +55,7 @@ fun CarteLecture(
     val big = LocalDensity.current.fontScale > 1.3f
     val texts = @Composable { m: Modifier ->
         Column(m, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title ?: "Rien en lecture", style = HorizonType.titleMedium, color = colors.onSurface, maxLines = if (big || !something) 2 else 1, overflow = TextOverflow.Ellipsis)
+            Text(title ?: stringResource(R.string.media_nothing), style = HorizonType.titleMedium, color = colors.onSurface, maxLines = if (big || !something) 2 else 1, overflow = TextOverflow.Ellipsis)
             if (something && !artist.isNullOrEmpty()) {
                 Text(artist, style = HorizonType.bodyMedium, color = colors.onSurfaceVariant, maxLines = if (big) 2 else 1, overflow = TextOverflow.Ellipsis)
             }
@@ -62,7 +64,7 @@ fun CarteLecture(
     val buttons = @Composable {
         Commande(
             if (playing) HorizonIcons.PauseFill else HorizonIcons.PlayFill,
-            if (playing) "Pause" else "Lecture",
+            stringResource(if (playing) R.string.media_pause else R.string.media_play),
             something,
             colors.primary,
             colors.onPrimary,
@@ -72,7 +74,7 @@ fun CarteLecture(
         )
         Commande(
             HorizonIcons.SkipForwardFill,
-            "Morceau suivant",
+            stringResource(R.string.media_next),
             something,
             colors.surfaceContainerHighest,
             colors.onSurface,
@@ -85,7 +87,7 @@ fun CarteLecture(
         .fillMaxWidth()
         .clip(HorizonShapes.extraLarge)
         .background(colors.surfaceContainerHigh)
-        .clickable(role = Role.Button, onClickLabel = "Ouvrir la télécommande", onClick = onOpen)
+        .clickable(role = Role.Button, onClickLabel = stringResource(R.string.media_open_remote), onClick = onOpen)
         .padding(14.dp)
     val gap = Arrangement.spacedBy(HorizonSpace.s3)
     if (big) {

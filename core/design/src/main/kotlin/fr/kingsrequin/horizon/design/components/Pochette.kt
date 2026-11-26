@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +31,7 @@ import fr.kingsrequin.horizon.design.HorizonScheme
 import fr.kingsrequin.horizon.design.HorizonSpace
 import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.LocalHorizonColors
+import fr.kingsrequin.horizon.design.R
 import fr.kingsrequin.horizon.design.coverCorner
 
 /**
@@ -41,13 +43,14 @@ import fr.kingsrequin.horizon.design.coverCorner
 @Composable
 fun Pochette(image: ImageBitmap?, side: Dp, modifier: Modifier = Modifier) {
     val colors = LocalHorizonColors.current
+    val label = stringResource(R.string.media_cover)
     Crossfade(
         targetState = image,
         animationSpec = tween(durationMillis = 700, easing = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)),
         modifier = modifier
             .size(side)
             .clip(RoundedCornerShape(coverCorner(side)))
-            .semantics { contentDescription = "Pochette du morceau" },
+            .semantics { contentDescription = label },
         label = "pochette",
     ) { shown ->
         if (shown != null) {

@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -45,6 +46,7 @@ import fr.kingsrequin.horizon.design.HorizonSpace
 import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.HorizonType
 import fr.kingsrequin.horizon.design.LocalHorizonColors
+import fr.kingsrequin.horizon.design.R
 import fr.kingsrequin.horizon.design.formatTime
 import kotlin.math.PI
 import kotlin.math.sin
@@ -69,7 +71,7 @@ private val Gap = 4.dp
 fun Progression(positionMs: Long, durationMs: Long, playing: Boolean, onSeek: (Long) -> Unit, modifier: Modifier = Modifier) {
     val colors = LocalHorizonColors.current
     if (durationMs <= 0) {
-        Text("En direct", style = HorizonType.labelLarge, color = colors.onSurfaceVariant, modifier = modifier.padding(vertical = HorizonSpace.s3))
+        Text(stringResource(R.string.media_live), style = HorizonType.labelLarge, color = colors.onSurfaceVariant, modifier = modifier.padding(vertical = HorizonSpace.s3))
         return
     }
     // Position que l'utilisateur tient du doigt, en fraction ; nulle hors d'un glissé.
@@ -79,6 +81,8 @@ fun Progression(positionMs: Long, durationMs: Long, playing: Boolean, onSeek: (L
     val fraction = held ?: (positionMs.toFloat() / durationMs).coerceIn(0f, 1f)
     val shownMs = (fraction * durationMs).toLong()
     val waving = playing && held == null && animationsOn()
+    val label = stringResource(R.string.media_progress)
+    val spoken = stringResource(R.string.media_progress_state, formatTime(shownMs), formatTime(durationMs))
     val phase = if (waving) {
         rememberInfiniteTransition(label = "ondulation")
             .animateFloat(0f, 1f, infiniteRepeatable(tween(durationMillis = 2_000, easing = LinearEasing), RepeatMode.Restart), label = "phase").value
@@ -91,8 +95,8 @@ fun Progression(positionMs: Long, durationMs: Long, playing: Boolean, onSeek: (L
                 .fillMaxWidth()
                 .height(HorizonSize.touchMin)
                 .semantics {
-                    contentDescription = "Progression"
-                    stateDescription = "${formatTime(shownMs)} sur ${formatTime(durationMs)}"
+                    contentDescription = label
+                    stateDescription = spoken
                     progressBarRangeInfo = ProgressBarRangeInfo(fraction, 0f..1f)
                     setProgress { target ->
                         seek((target.coerceIn(0f, 1f) * duration).toLong())

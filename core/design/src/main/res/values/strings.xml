@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Texts of the remote components (player, volume). French: values-fr. -->
+<resources>
+    <string name="media_nothing">Nothing playing</string>
+    <string name="media_play">Play</string>
+    <string name="media_pause">Pause</string>
+    <string name="media_next">Next track</string>
+    <string name="media_previous">Previous track</string>
+    <string name="media_open_remote">Open the remote</string>
+    <string name="media_cover">Cover art</string>
+    <string name="media_live">Live</string>
+    <string name="media_progress">Progress</string>
+    <string name="media_progress_state">%1$s of %2$s</string>
+    <string name="volume_label">PC volume</string>
+    <string name="volume_value">%1$d%%</string>
+    <plurals name="volume_spoken">
+        <item quantity="one">%1$d percent</item>
+        <item quantity="other">%1$d percent</item>
+    </plurals>
+    <string name="volume_muted">Muted</string>
+    <string name="volume_mute">Mute</string>
+    <string name="volume_unmute">Unmute</string>
+</resources>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="media_nothing">Rien en lecture</string>
+    <string name="media_play">Lecture</string>
+    <string name="media_pause">Pause</string>
+    <string name="media_next">Morceau suivant</string>
+    <string name="media_previous">Morceau précédent</string>
+    <string name="media_open_remote">Ouvrir la télécommande</string>
+    <string name="media_cover">Pochette du morceau</string>
+    <string name="media_live">En direct</string>
+    <string name="media_progress">Progression</string>
+    <string name="media_progress_state">%1$s sur %2$s</string>
+    <string name="volume_label">Volume général</string>
+    <string name="volume_value">%1$d\u202F%%</string>
+    <plurals name="volume_spoken">
+        <item quantity="one">%1$d pour cent</item>
+        <item quantity="many">%1$d pour cent</item>
+        <item quantity="other">%1$d pour cent</item>
+    </plurals>
+    <string name="volume_muted">Muet</string>
+    <string name="volume_mute">Couper le son</string>
+    <string name="volume_unmute">Rétablir le son</string>
+</resources>
