@@ -99,4 +99,47 @@
     <string name="update_failed">Échec du téléchargement · Réessayer</string>
     <string name="update_permission">Autorise Horizon Mobile à installer des applis, puis reviens ici.</string>
     <string name="update_title">Horizon Mobile %1$s est disponible</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_backspace">Effacer</string>
+    <string name="key_ctrl">Ctrl</string>
+    <string name="key_delete">Suppr</string>
+    <string name="key_down">Flèche bas</string>
+    <string name="key_end">Fin</string>
+    <string name="key_enter">Entrée</string>
+    <string name="key_escape">Échap</string>
+    <string name="key_home">Début</string>
+    <string name="key_left">Flèche gauche</string>
+    <string name="key_page_down">Pg suiv</string>
+    <string name="key_page_up">Pg préc</string>
+    <string name="key_right">Flèche droite</string>
+    <string name="key_shift">Maj</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_up">Flèche haut</string>
+    <string name="key_win">Win</string>
+    <string name="pad_buttons">Boutons de clic</string>
+    <string name="pad_buttons_detail">Boutons gauche et droit sous le pavé.</string>
+    <string name="pad_close">Fermer</string>
+    <string name="pad_copy">Copier</string>
+    <string name="pad_cut">Couper</string>
+    <string name="pad_desktop">Bureau</string>
+    <string name="pad_hint">Un doigt déplace le pointeur, un appui clique.
+Deux doigts font défiler, pincer zoome.
+Appui à deux doigts : clic droit ; à trois : clic du milieu.
+Double appui maintenu : glisser.</string>
+    <string name="pad_keyboard">Clavier</string>
+    <string name="pad_left">Gauche</string>
+    <string name="pad_natural">Défilement naturel</string>
+    <string name="pad_natural_detail">Le contenu suit les doigts, comme sur un téléphone.</string>
+    <string name="pad_open">Clavier et souris</string>
+    <string name="pad_paste">Coller</string>
+    <string name="pad_pointer_speed">Vitesse du pointeur</string>
+    <string name="pad_right">Droit</string>
+    <string name="pad_scroll_speed">Vitesse du défilement</string>
+    <string name="pad_select_all">Tout sélectionner</string>
+    <string name="pad_settings">Réglages du pavé</string>
+    <string name="pad_switch_window">Fenêtre précédente</string>
+    <string name="pad_title">Clavier et souris</string>
+    <string name="pad_to_grant">Clavier et souris non autorisés</string>
+    <string name="pad_to_grant_detail">Sur le PC, ouvre Horizon › Réglages › Téléphone et coche « Clavier et souris » sous ce téléphone. Pendant que ce téléphone tape, Horizon affiche un clavier sur ses barres : un clic dessus retire le droit.</string>
+    <string name="pad_undo">Annuler</string>
 </resources>

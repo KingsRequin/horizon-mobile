@@ -101,4 +101,47 @@
     <string name="update_failed">Download failed · Try again</string>
     <string name="update_permission">Allow Horizon Mobile to install apps, then come back here.</string>
     <string name="update_title">Horizon Mobile %1$s is available</string>
+    <string name="key_alt">Alt</string>
+    <string name="key_backspace">Backspace</string>
+    <string name="key_ctrl">Ctrl</string>
+    <string name="key_delete">Del</string>
+    <string name="key_down">Down arrow</string>
+    <string name="key_end">End</string>
+    <string name="key_enter">Enter</string>
+    <string name="key_escape">Esc</string>
+    <string name="key_home">Home</string>
+    <string name="key_left">Left arrow</string>
+    <string name="key_page_down">PgDn</string>
+    <string name="key_page_up">PgUp</string>
+    <string name="key_right">Right arrow</string>
+    <string name="key_shift">Shift</string>
+    <string name="key_tab">Tab</string>
+    <string name="key_up">Up arrow</string>
+    <string name="key_win">Win</string>
+    <string name="pad_buttons">Click buttons</string>
+    <string name="pad_buttons_detail">Left and right buttons under the touchpad.</string>
+    <string name="pad_close">Close</string>
+    <string name="pad_copy">Copy</string>
+    <string name="pad_cut">Cut</string>
+    <string name="pad_desktop">Desktop</string>
+    <string name="pad_hint">One finger moves the pointer, a tap clicks.
+Two fingers scroll, a pinch zooms.
+Tap with two fingers for a right click, three for a middle click.
+Double tap and hold to drag.</string>
+    <string name="pad_keyboard">Keyboard</string>
+    <string name="pad_left">Left</string>
+    <string name="pad_natural">Natural scrolling</string>
+    <string name="pad_natural_detail">The content follows your fingers, as on a phone.</string>
+    <string name="pad_open">Keyboard and mouse</string>
+    <string name="pad_paste">Paste</string>
+    <string name="pad_pointer_speed">Pointer speed</string>
+    <string name="pad_right">Right</string>
+    <string name="pad_scroll_speed">Scroll speed</string>
+    <string name="pad_select_all">Select all</string>
+    <string name="pad_settings">Touchpad settings</string>
+    <string name="pad_switch_window">Previous window</string>
+    <string name="pad_title">Keyboard and mouse</string>
+    <string name="pad_to_grant">Keyboard and mouse not allowed</string>
+    <string name="pad_to_grant_detail">On the PC, open Horizon › Settings › Phone and tick “Keyboard and mouse” under this phone. While this phone types, Horizon shows a keyboard on its bars: a click on it takes the right back.</string>
+    <string name="pad_undo">Undo</string>
 </resources>

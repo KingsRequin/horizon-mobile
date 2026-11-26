@@ -17,6 +17,9 @@ fun remoteAccess(features: Set<String>, granted: Set<String>): Access = access(M
 /** L'accès au mixeur par appli, à la sortie audio et aux actions rapides (droit « Son et actions »). */
 fun soundAccess(features: Set<String>, granted: Set<String>): Access = access(MIXER in features || ACTIONS in features, SOUND in granted)
 
+/** L'accès au clavier et à la souris du PC (droit « Clavier et souris », jamais accordé d'office). */
+fun inputAccess(features: Set<String>, granted: Set<String>): Access = access(INPUT in features, INPUT in granted)
+
 /** La sortie qui suit `current` dans `outputs` (en boucle) ; `null` s'il n'y en a pas d'autre. */
 fun nextOutput(outputs: List<String>, current: String?): String? {
     if (outputs.size < 2) return null
@@ -34,3 +37,4 @@ private const val MEDIA = "media"
 private const val MIXER = "mixer"
 private const val ACTIONS = "actions"
 private const val SOUND = "sound"
+private const val INPUT = "input"

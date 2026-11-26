@@ -40,6 +40,25 @@ class TypingTest {
     }
 
     @Test
+    fun anEditOfTheFieldBecomesBackspacesAndText() {
+        assertEquals(TextEdit(0, "c"), Typing.edit("ab", "abc"))
+        assertEquals(TextEdit(1, ""), Typing.edit("abc", "ab"))
+        assertEquals("une correction : on efface ce qui change, on retape la suite", TextEdit(2, "he"), Typing.edit("teh", "the"))
+        assertEquals(TextEdit(0, ""), Typing.edit("x", "x"))
+        assertEquals(TextEdit(0, "😀"), Typing.edit("a", "a😀"))
+        assertEquals("un émoji compte pour une frappe", TextEdit(1, ""), Typing.edit("a😀", "a"))
+    }
+
+    @Test
+    fun anEditSendsTheBackspacesThenTheText() {
+        assertEquals(
+            listOf(ToPc.InputKey("backspace"), ToPc.InputKey("backspace"), ToPc.InputText("he")),
+            Typing.send(TextEdit(2, "he"), emptySet()),
+        )
+        assertEquals(listOf(ToPc.InputKey("v", listOf("ctrl"))), Typing.send(TextEdit(0, "v"), setOf(Mod.CTRL)))
+    }
+
+    @Test
     fun aSpecialKeyCarriesTheModifiers() {
         assertEquals(ToPc.InputKey("left", listOf("ctrl", "shift")), Typing.key("left", setOf(Mod.SHIFT, Mod.CTRL)))
         assertEquals(ToPc.InputKey("escape"), Typing.key("escape", emptySet()))

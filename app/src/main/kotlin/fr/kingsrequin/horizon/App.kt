@@ -59,6 +59,7 @@ import fr.kingsrequin.horizon.design.components.Onglet
 import fr.kingsrequin.horizon.home.HomeActionsRoute
 import fr.kingsrequin.horizon.home.HomeScreen
 import fr.kingsrequin.horizon.link.LinkState
+import fr.kingsrequin.horizon.pad.PadRoute
 import fr.kingsrequin.horizon.pairing.PairingFlow
 import fr.kingsrequin.horizon.pairing.PairingStep
 import fr.kingsrequin.horizon.pairing.PairingViewModel
@@ -66,6 +67,7 @@ import fr.kingsrequin.horizon.protocol.ToPc
 import fr.kingsrequin.horizon.remote.Access
 import fr.kingsrequin.horizon.remote.RemoteRoute
 import fr.kingsrequin.horizon.remote.rememberCover
+import fr.kingsrequin.horizon.remote.inputAccess
 import fr.kingsrequin.horizon.remote.remoteAccess
 import fr.kingsrequin.horizon.remote.soundAccess
 import fr.kingsrequin.horizon.settings.Advice
@@ -146,9 +148,18 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
     // Hors ligne, l'onglet Télécommande reste tel que la dernière session l'a laissé.
     var access by rememberSaveable { mutableStateOf(Access.Hidden) }
     var sound by rememberSaveable { mutableStateOf(Access.Hidden) }
+    var input by rememberSaveable { mutableStateOf(Access.Hidden) }
     (state as? LinkState.Connected)?.let {
         access = remoteAccess(it.features, it.granted)
         sound = soundAccess(it.features, it.granted)
+        input = inputAccess(it.features, it.granted)
+    }
+    // Le pavé (clavier et souris) prend tout l'écran, barre de navigation comprise.
+    var pad by rememberSaveable { mutableStateOf(false) }
+    if (input == Access.Hidden) pad = false
+    if (pad) {
+        PadRoute(connected = state is LinkState.Connected, access = input, onClose = { pad = false })
+        return
     }
     val tabs = listOfNotNull(Tab.Home, Tab.Remote.takeIf { access != Access.Hidden }, Tab.Settings)
     if (tab !in tabs) tab = Tab.Home
@@ -216,7 +227,7 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
                     null
                 },
             )
-            Tab.Remote -> RemoteRoute(connected = state is LinkState.Connected, access = access, sound = sound, modifier = content)
+            Tab.Remote -> RemoteRoute(connected = state is LinkState.Connected, access = access, sound = sound, input = input, onPad = { pad = true }, modifier = content)
             Tab.Settings -> SettingsScreen(
                 mode = mode,
                 pcName = pcName,

@@ -42,15 +42,16 @@ class PadSender(private val intervalMs: Long = 16, private val send: (ToPc) -> U
     /** Envoie ce qui attend si l'intervalle est passé depuis le dernier envoi. */
     fun flush(nowMs: Long) {
         val last = lastSent
-        if (last == null || nowMs - last >= intervalMs) sendPending(nowMs)
+        if (last == null || nowMs - last >= intervalMs) sendNow(nowMs)
     }
 
     private fun button(button: Button, action: String, nowMs: Long) {
-        sendPending(nowMs)
+        sendNow(nowMs)
         send(ToPc.InputButton(button.wire, action))
     }
 
-    private fun sendPending(nowMs: Long) {
+    /** Envoie tout de suite ce qui attend (avant une touche ou du texte, ou en quittant le pavé). */
+    fun sendNow(nowMs: Long) {
         if (!pending) return
         val (mx, my, sx, sy, z) = listOf(whole(moveX), whole(moveY), whole(scrollX), whole(scrollY), whole(zoom))
         if (mx != 0 || my != 0) send(ToPc.InputMove(mx, my))

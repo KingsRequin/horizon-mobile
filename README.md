@@ -35,6 +35,15 @@ Le téléphone et le PC doivent être sur le même réseau. L'appli s'installe a
   à la suivante ou la choisir) et le volume et le muet de chaque appli ; sur l'accueil,
   verrouiller le PC, ne pas déranger, le minuteur (durées d'Horizon, pause, arrêt) et la batterie
   du casque du PC. Droit *Son et actions* dans Horizon.
+- Clavier et souris (Horizon 0.11 et plus) : le bouton clavier de la télécommande ouvre un pavé
+  tactile plein écran. Un doigt déplace le pointeur, un appui clique (à deux doigts : clic
+  droit ; à trois : clic du milieu), deux doigts font défiler, pincer zoome, un double appui
+  maintenu fait glisser ; boutons gauche et droit en dessous. Le clavier du téléphone tape sur
+  le PC (toute langue, émojis compris), avec une rangée de touches (Échap, Tab, Ctrl, Alt, Maj,
+  Win, flèches…) et une autre de raccourcis et de F1 à F12. Vitesses et sens du défilement se
+  règlent sur le pavé. Droit *Clavier et souris*, jamais accordé d'office : à cocher dans
+  Horizon, qui signale chaque séance dans son îlot et par un clavier sur ses barres ; un clic
+  dessus retire le droit. Rien ne passe quand la session Windows est verrouillée.
 - Pendant que le PC joue, ses commandes apparaissent dans le volet, sur l'écran verrouillé et
   sur un casque Bluetooth (*Réglages › Commandes du PC dans le volet* pour les retirer).
 - Chaque téléphone a ses droits dans Horizon (*Réglages › Téléphone*, case *Télécommande* sous

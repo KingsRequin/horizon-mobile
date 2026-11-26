@@ -33,4 +33,6 @@ object HorizonIcons {
     @DrawableRes val List = R.drawable.ic_list
     @DrawableRes val Moon = R.drawable.ic_moon
     @DrawableRes val Lightning = R.drawable.ic_lightning
+    @DrawableRes val Keyboard = R.drawable.ic_keyboard
+    @DrawableRes val SlidersHorizontal = R.drawable.ic_sliders_horizontal
 }

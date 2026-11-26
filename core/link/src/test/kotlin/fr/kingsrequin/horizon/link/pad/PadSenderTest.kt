@@ -63,6 +63,15 @@ class PadSenderTest {
     }
 
     @Test
+    fun sendNowSendsWhatWaitsWithoutWaitingForTheInterval() {
+        sender.act(PadAction.Move(5f, 0f), 0)
+        sender.act(PadAction.Scroll(0f, 120f), 4)
+        sender.sendNow(5)
+        assertEquals(listOf(ToPc.InputMove(5, 0), ToPc.InputScroll(0, 120)), sent)
+        assertEquals(false, sender.pending)
+    }
+
+    @Test
     fun nothingIsSentForAZeroMove() {
         sender.act(PadAction.Move(0.2f, 0.1f), 0)
         sender.flush(100)

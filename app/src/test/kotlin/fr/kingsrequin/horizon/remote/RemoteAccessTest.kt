@@ -30,3 +30,12 @@ class SoundAccessTest {
         assertEquals(null, nextOutput(listOf("a"), "a"))
     }
 }
+
+class InputAccessTest {
+    @Test
+    fun keyboardAndMouseFollowTheInputRight() {
+        assertEquals("PC 0.10 : pas de clavier ni de souris", Access.Hidden, inputAccess(setOf("battery", "media", "mixer"), setOf("battery", "input")))
+        assertEquals("jamais accordé d'office : à autoriser", Access.ToGrant, inputAccess(setOf("battery", "media", "input"), setOf("battery", "media", "sound")))
+        assertEquals(Access.Granted, inputAccess(setOf("battery", "input"), setOf("battery", "input")))
+    }
+}
