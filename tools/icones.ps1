@@ -11,7 +11,7 @@ New-Item -ItemType Directory -Force $out | Out-Null
 # Version précise du dépôt phosphor-icons/core : les mêmes tracés à chaque fabrication.
 $commit = '2b75f3ad12b420c9504ef05df8d2564a28f8500e'
 $names = @('device-mobile', 'watch', 'headset', 'check', 'timer', 'gear-six', 'warning', 'caret-down', 'play', 'x', 'house', 'desktop', 'lock', 'qr-code', 'copy',
-  'play-fill', 'pause-fill', 'skip-back-fill', 'skip-forward-fill', 'speaker-high', 'speaker-slash', 'list')
+  'play-fill', 'pause-fill', 'skip-back-fill', 'skip-forward-fill', 'speaker-high', 'speaker-slash', 'list', 'moon', 'lightning')
 foreach ($name in $names) {
   $weight, $label = if ($name -like '*-fill') { 'fill', 'Fill' } else { 'regular', 'Regular' }
   $svg = (Invoke-WebRequest "https://raw.githubusercontent.com/phosphor-icons/core/$commit/assets/$weight/$name.svg").Content

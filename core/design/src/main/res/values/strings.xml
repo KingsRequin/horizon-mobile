@@ -20,4 +20,13 @@
     <string name="volume_muted">Muted</string>
     <string name="volume_mute">Mute</string>
     <string name="volume_unmute">Unmute</string>
+    <string name="output_current">Audio output: %1$s</string>
+    <string name="output_switch">Switch to the next output</string>
+    <string name="output_choose">Choose another output</string>
+    <string name="level_charging">Charging</string>
+    <string name="level_low">Low</string>
+    <plurals name="level_spoken">
+        <item quantity="one">%1$s, %2$d percent</item>
+        <item quantity="other">%1$s, %2$d percent</item>
+    </plurals>
 </resources>

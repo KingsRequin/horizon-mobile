@@ -20,4 +20,14 @@
     <string name="volume_muted">Muet</string>
     <string name="volume_mute">Couper le son</string>
     <string name="volume_unmute">Rétablir le son</string>
+    <string name="output_current">Sortie audio : %1$s</string>
+    <string name="output_switch">Passer à la sortie suivante</string>
+    <string name="output_choose">Choisir une autre sortie</string>
+    <string name="level_charging">En charge</string>
+    <string name="level_low">Faible</string>
+    <plurals name="level_spoken">
+        <item quantity="one">%1$s, %2$d pour cent</item>
+        <item quantity="many">%1$s, %2$d pour cent</item>
+        <item quantity="other">%1$s, %2$d pour cent</item>
+    </plurals>
 </resources>

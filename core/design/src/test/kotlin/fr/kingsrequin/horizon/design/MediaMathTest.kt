@@ -22,6 +22,13 @@ class MediaMathTest {
     }
 
     @Test
+    fun anAppShowsTheFirstLetterOfItsName() {
+        assertEquals("P", appInitial("pear desktop"))
+        assertEquals("É", appInitial("  éditeur"))
+        assertEquals("?", appInitial(""))
+    }
+
+    @Test
     fun theVolumeTicksEveryFivePercentAndHarderAtTheEnds() {
         assertEquals(VolumeTick.Step, volumeTick(0.48f, 0.51f))
         assertEquals(VolumeTick.Step, volumeTick(0.51f, 0.49f))

@@ -30,7 +30,7 @@ import fr.kingsrequin.horizon.design.LocalHorizonColors
 import fr.kingsrequin.horizon.design.R
 
 /** Hauteur des boutons de la carte (`control`). */
-private val Control = 48.dp
+private val Control = 56.dp
 
 /**
  * La lecture en cours sur le PC, en une carte de l'accueil : pochette, titre, artiste, lecture ou

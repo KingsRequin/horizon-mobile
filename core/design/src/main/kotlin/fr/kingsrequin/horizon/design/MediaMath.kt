@@ -14,6 +14,9 @@ fun formatTime(ms: Long): String {
     return if (h > 0) String.format(Locale.ROOT, "%d:%02d:%02d", h, m, s) else String.format(Locale.ROOT, "%d:%02d", m, s)
 }
 
+/** L'initiale d'une appli (sa pastille dans le mixeur quand Horizon n'envoie pas d'icône). */
+fun appInitial(name: String): String = name.trim().firstOrNull()?.uppercase() ?: "?"
+
 /** Ce que la glissière de volume fait sentir. */
 enum class VolumeTick { None, Step, Edge }
 

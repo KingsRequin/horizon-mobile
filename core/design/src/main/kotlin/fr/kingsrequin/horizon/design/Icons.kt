@@ -31,4 +31,6 @@ object HorizonIcons {
     @DrawableRes val SpeakerHigh = R.drawable.ic_speaker_high
     @DrawableRes val SpeakerSlash = R.drawable.ic_speaker_slash
     @DrawableRes val List = R.drawable.ic_list
+    @DrawableRes val Moon = R.drawable.ic_moon
+    @DrawableRes val Lightning = R.drawable.ic_lightning
 }
