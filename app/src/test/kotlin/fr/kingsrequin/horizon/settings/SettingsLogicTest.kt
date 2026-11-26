@@ -18,7 +18,7 @@ class SettingsLogicTest {
             assertTrue("$must dans :\n$text", text.contains(must))
         }
         for (never in listOf("192.168.1.49", "10.0.0.5", "BUREAU")) assertFalse(never, text.contains(never))
-        val connected = diagnostic(DeviceInfo("Google", "Pixel 9", 36, gms = false), "0.1.0", LinkMode.WhenOpen, LinkState.Connected("Mon PC", 0, setOf("battery")), null, emptyList())
+        val connected = diagnostic(DeviceInfo("Google", "Pixel 9", 36, gms = false), "0.1.0", LinkMode.WhenOpen, LinkState.Connected("Mon PC", 0, setOf("battery"), setOf("battery")), null, emptyList())
         assertTrue(connected.contains("Connected") && connected.contains("battery") && connected.contains("services Google : non"))
         assertFalse(connected.contains("Mon PC"))
     }
