@@ -35,6 +35,8 @@ data class HorizonScheme(
     val primaryContainer: Color,
     val onPrimaryContainer: Color,
     val coverGround: Color,
+    /** La couleur reçue du PC, telle quelle : les bandes de la pochette de repli. */
+    val seed: Color,
 )
 
 /** Couleurs du thème en cours : `LocalHorizonColors.current.primary`. */
@@ -69,6 +71,7 @@ fun HorizonTheme(seed: Int = DEFAULT_SEED, content: @Composable () -> Unit) {
         primaryContainer = fade(target.primaryContainer),
         onPrimaryContainer = fade(target.onPrimaryContainer),
         coverGround = fade(target.coverGround),
+        seed = fade(seed or (0xFF shl 24)),
     )
     // Les composants Material employés tels quels (boîtes de dialogue, champs) suivent la palette.
     val material = darkColorScheme(
