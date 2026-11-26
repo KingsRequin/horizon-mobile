@@ -43,6 +43,9 @@
     <string name="tab_remote">Remote</string>
 
     <!-- Remote -->
+    <string name="settings_remote">Remote</string>
+    <string name="settings_system_controls">PC controls in the notification shade</string>
+    <string name="settings_system_controls_detail">Play, pause and change track from the notification shade, the lock screen or a Bluetooth headset while the PC plays.</string>
     <string name="remote_offline">PC not connected</string>
     <string name="remote_choose_player">Choose the player</string>
     <string name="remote_to_grant">Remote not allowed</string>

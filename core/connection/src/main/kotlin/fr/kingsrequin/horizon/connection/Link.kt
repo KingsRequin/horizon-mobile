@@ -20,6 +20,9 @@ import fr.kingsrequin.horizon.protocol.ToPc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -34,6 +37,10 @@ object Link {
     private const val TAG = "Liaison"
     private const val PREFS = "liaison"
     private const val KEY_MODE = "mode"
+    private const val KEY_SYSTEM_CONTROLS = "commandes-systeme"
+
+    /** Pas d'une touche de volume sur le volume du PC. */
+    private const val VOLUME_KEY_STEP = 0.02f
     private const val MEDIA = "media"
     private const val VOLUME = "volume"
 
@@ -52,6 +59,15 @@ object Link {
 
     /** Écrans qui regardent le volume du PC (la télécommande) : il n'est envoyé que pendant ce temps. */
     private var volumeWatchers = 0
+
+    private val systemControlsState = MutableStateFlow(true)
+
+    /** Commandes du PC dans le volet et sur l'écran verrouillé (réglage, activé par défaut). */
+    val systemControls: StateFlow<Boolean> = systemControlsState.asStateFlow()
+
+    /** Vrai pendant que l'écran Télécommande est au premier plan : les touches de volume règlent le PC. */
+    @Volatile
+    var volumeKeysOnPc = false
 
     /** Derniers événements de la liaison, pour le rapport de diagnostic. */
     val log = LinkLog()
@@ -75,6 +91,7 @@ object Link {
     fun init(context: Context) {
         if (::manager.isInitialized) return
         app = context.applicationContext as Application
+        systemControlsState.value = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_SYSTEM_CONTROLS, true)
         reporter = BatteryReporter(::deviceName)
         // Les connexions sortent par le réseau local, même si les données mobiles sont le réseau par défaut.
         val transport = OkHttpTransport(bind = { fallback -> lan.socketFactory() ?: fallback })
@@ -104,6 +121,31 @@ object Link {
     /** Une commande de la télécommande ; sans session, elle provoque un essai et se perd. */
     fun command(msg: ToPc) {
         manager.send(msg)
+    }
+
+    /** Règle le volume du PC : affiché tout de suite, envoyé aussitôt. */
+    fun setPcVolume(volume: Float) {
+        val v = volume.coerceIn(0f, 1f)
+        remote.localVolume(v)
+        command(ToPc.VolumeSet(v))
+    }
+
+    /**
+     * Une touche de volume du téléphone (`up` : monter) ; vrai si elle a réglé le PC. Seulement
+     * sur l'écran Télécommande et quand le volume du PC est connu : sinon le téléphone garde la
+     * touche pour son propre volume.
+     */
+    fun volumeKey(up: Boolean): Boolean {
+        if (!volumeKeysOnPc) return false
+        val current = remote.view.value.volume ?: return false
+        setPcVolume(current + if (up) VOLUME_KEY_STEP else -VOLUME_KEY_STEP)
+        return true
+    }
+
+    /** Active ou coupe les commandes du PC dans le volet et sur l'écran verrouillé. */
+    fun setSystemControls(on: Boolean) {
+        app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putBoolean(KEY_SYSTEM_CONTROLS, on) }
+        systemControlsState.value = on
     }
 
     /** L'appli vient à l'écran, ou le quitte. */

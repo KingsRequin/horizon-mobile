@@ -136,6 +136,7 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
     val tabs = listOfNotNull(Tab.Home, Tab.Remote.takeIf { access != Access.Hidden }, Tab.Settings)
     if (tab !in tabs) tab = Tab.Home
     var mode by remember { mutableStateOf(Link.mode) }
+    val systemControls by Link.systemControls.collectAsStateWithLifecycle()
     val version = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }
     val exitReason = remember { lastExitReason(context) }
     // L'heure avance seule tant que l'appli est à l'écran : « il y a 2 min » se met à jour.
@@ -213,8 +214,10 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
                     licences = { open(context, Intent(Intent.ACTION_VIEW, "$REPOSITORY/blob/main/LICENCES-TIERCES.md".toUri())) },
                     source = { open(context, Intent(Intent.ACTION_VIEW, REPOSITORY.toUri())) },
                     download = { open(context, Intent(Intent.ACTION_VIEW, it.url.toUri())) },
+                    systemControls = if (access != Access.Hidden) Link::setSystemControls else null,
                 ),
                 modifier = content,
+                systemControls = systemControls,
             )
         }
         val labels = mapOf(

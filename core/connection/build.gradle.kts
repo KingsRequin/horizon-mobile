@@ -15,6 +15,9 @@ dependencies {
     api(project(":core:link"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.media3.session)
+    // Les icônes du lecteur pour la notification, les mêmes que sur la télécommande.
+    implementation(project(":core:design"))
 
     testImplementation(libs.junit)
 }

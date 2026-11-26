@@ -41,6 +41,9 @@
     <string name="tab_remote">Télécommande</string>
 
     <!-- Télécommande -->
+    <string name="settings_remote">Télécommande</string>
+    <string name="settings_system_controls">Commandes du PC dans le volet</string>
+    <string name="settings_system_controls_detail">Lecture, pause et morceau suivant depuis le volet, l’écran verrouillé ou un casque Bluetooth pendant que le PC joue.</string>
     <string name="remote_offline">PC non relié</string>
     <string name="remote_choose_player">Choisir le lecteur</string>
     <string name="remote_to_grant">Télécommande non autorisée</string>

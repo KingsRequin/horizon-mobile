@@ -3,6 +3,7 @@ package fr.kingsrequin.horizon
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -21,6 +22,23 @@ class MainActivity : ComponentActivity() {
         fr.kingsrequin.horizon.connection.Link.init(this)
         if (savedInstanceState == null) read(intent)
         setContent { App(pairingLink) }
+    }
+
+    /** Sur l'écran Télécommande, les touches de volume règlent le PC (sinon, celui du téléphone). */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        val up = when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> true
+            KeyEvent.KEYCODE_VOLUME_DOWN -> false
+            else -> return super.onKeyDown(keyCode, event)
+        }
+        return fr.kingsrequin.horizon.connection.Link.volumeKey(up) || super.onKeyDown(keyCode, event)
+    }
+
+    /** Le relâchement d'une touche de volume prise pour le PC ne doit pas régler le téléphone. */
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        val volume = keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
+        val link = fr.kingsrequin.horizon.connection.Link
+        return volume && link.volumeKeysOnPc && link.remote.view.value.volume != null || super.onKeyUp(keyCode, event)
     }
 
     override fun onNewIntent(intent: Intent) {

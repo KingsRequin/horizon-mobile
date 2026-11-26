@@ -90,7 +90,11 @@ fun RemoteRoute(connected: Boolean, access: Access, modifier: Modifier = Modifie
     val view by Link.remote.view.collectAsStateWithLifecycle()
     LifecycleResumeEffect(Unit) {
         Link.watchVolume(true)
-        onPauseOrDispose { Link.watchVolume(false) }
+        Link.volumeKeysOnPc = true
+        onPauseOrDispose {
+            Link.volumeKeysOnPc = false
+            Link.watchVolume(false)
+        }
     }
     val playing = view.media?.playing == true
     val now by produceState(System.currentTimeMillis(), playing) {

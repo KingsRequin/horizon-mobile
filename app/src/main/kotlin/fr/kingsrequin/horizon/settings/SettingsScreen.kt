@@ -47,11 +47,13 @@ class SettingsActions(
     val licences: () -> Unit = {},
     val source: () -> Unit = {},
     val download: (Update) -> Unit = {},
+    /** Commandes du PC dans le volet et sur l'écran verrouillé ; `null` sans télécommande. */
+    val systemControls: ((Boolean) -> Unit)? = null,
 )
 
 /** Les réglages : mode de liaison, PC appairé, langue, rapport de diagnostic, à propos. */
 @Composable
-fun SettingsScreen(mode: LinkMode, pcName: String, version: String, update: Update?, actions: SettingsActions, modifier: Modifier = Modifier) {
+fun SettingsScreen(mode: LinkMode, pcName: String, version: String, update: Update?, actions: SettingsActions, modifier: Modifier = Modifier, systemControls: Boolean = true) {
     val colors = LocalHorizonColors.current
     // Oublier le PC se confirme dans l'écran, sans boîte de dialogue.
     var forgetting by rememberSaveable { mutableStateOf(false) }
@@ -69,6 +71,12 @@ fun SettingsScreen(mode: LinkMode, pcName: String, version: String, update: Upda
         Groupe {
             LigneReglage(stringResource(R.string.pairing_mode_continuous), detail = stringResource(R.string.pairing_mode_continuous_detail), selected = mode == LinkMode.Continuous) { actions.setMode(LinkMode.Continuous) }
             LigneReglage(stringResource(R.string.pairing_mode_when_open), detail = stringResource(R.string.pairing_mode_when_open_detail), selected = mode == LinkMode.WhenOpen) { actions.setMode(LinkMode.WhenOpen) }
+        }
+        actions.systemControls?.let { set ->
+            Section(stringResource(R.string.settings_remote))
+            Groupe {
+                LigneReglage(stringResource(R.string.settings_system_controls), detail = stringResource(R.string.settings_system_controls_detail), selected = systemControls) { set(!systemControls) }
+            }
         }
         Section(stringResource(R.string.settings_pc))
         if (forgetting) {
@@ -116,7 +124,7 @@ private fun Section(title: String) {
 @Preview(name = "Réglages", widthDp = 360, heightDp = 900)
 @Composable
 private fun SettingsPreview() = HorizonTheme {
-    SettingsScreen(LinkMode.Continuous, "Bureau", "0.1.0", Update("0.2.0", "https://exemple.fr"), SettingsActions(language = {}))
+    SettingsScreen(LinkMode.Continuous, "Bureau", "0.1.0", Update("0.2.0", "https://exemple.fr"), SettingsActions(language = {}, systemControls = {}))
 }
 
 @Preview(name = "Réglages, police à 200 %", widthDp = 360, heightDp = 1400, fontScale = 2f)
