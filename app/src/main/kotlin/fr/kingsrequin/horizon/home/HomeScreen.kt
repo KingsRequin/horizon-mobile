@@ -29,6 +29,7 @@ import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.HorizonType
 import fr.kingsrequin.horizon.design.LocalHorizonColors
 import fr.kingsrequin.horizon.design.components.Bouton
+import fr.kingsrequin.horizon.design.components.CarteLecture
 import fr.kingsrequin.horizon.design.components.EtatLiaison
 import fr.kingsrequin.horizon.design.components.Groupe
 import fr.kingsrequin.horizon.design.components.LigneEnvoi
@@ -41,12 +42,23 @@ import fr.kingsrequin.horizon.ui.agoOf
 import fr.kingsrequin.horizon.ui.text
 
 /**
- * L'accueil : le PC et l'état de la liaison, ce que le téléphone lui envoie (jamais le
+ * L'accueil : le PC et l'état de la liaison, la lecture en cours sur le PC (`media`, la carte de
+ * lecture, si ce téléphone a la télécommande), ce que le téléphone lui envoie (jamais le
  * pourcentage : la barre d'Horizon est là pour ça), et au besoin une carte qui dit quoi faire.
  * `lastSentMs` : heure du dernier envoi de la batterie ; `nowMs` : l'heure, qui avance seule.
  */
 @Composable
-fun HomeScreen(state: LinkState, lastSentMs: Long?, nowMs: Long, advice: Advice?, onPairAgain: () -> Unit, onAdvice: (Advice) -> Unit, onStatus: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    state: LinkState,
+    lastSentMs: Long?,
+    nowMs: Long,
+    advice: Advice?,
+    onPairAgain: () -> Unit,
+    onAdvice: (Advice) -> Unit,
+    onStatus: () -> Unit,
+    modifier: Modifier = Modifier,
+    media: (@Composable () -> Unit)? = null,
+) {
     val colors = LocalHorizonColors.current
     val res = LocalResources.current
     val (name, tone) = when (state) {
@@ -81,6 +93,7 @@ fun HomeScreen(state: LinkState, lastSentMs: Long?, nowMs: Long, advice: Advice?
             advice == Advice.AllowBackground -> Card(stringResource(R.string.advice_background), stringResource(R.string.advice_background_detail), stringResource(R.string.advice_allow)) { onAdvice(advice) }
             advice == Advice.WasKilled -> Card(stringResource(R.string.advice_killed), stringResource(R.string.advice_killed_detail), stringResource(R.string.pairing_open_settings)) { onAdvice(advice) }
         }
+        media?.invoke()
         Column(verticalArrangement = Arrangement.spacedBy(HorizonSpace.s2)) {
             Text(
                 stringResource(R.string.home_sent),
@@ -119,9 +132,22 @@ private fun Card(title: String, detail: String?, action: String?, onAction: () -
 }
 
 @Composable
-private fun HomePreview(state: LinkState, seed: Int = 0xFFF97316.toInt(), advice: Advice? = null) = HorizonTheme(seed) {
-    HomeScreen(state, lastSentMs = 0, nowMs = 125_000, advice = advice, onPairAgain = {}, onAdvice = {}, onStatus = {})
+private fun HomePreview(state: LinkState, seed: Int = 0xFFF97316.toInt(), advice: Advice? = null, playing: String? = null) = HorizonTheme(seed) {
+    val card: (@Composable () -> Unit)? = if (state is LinkState.Connected && "media" in state.granted) {
+        { CarteLecture(null, playing, "SPLATA".takeIf { playing != null }, playing = true, onPlayPause = {}, onNext = {}, onOpen = {}) }
+    } else {
+        null
+    }
+    HomeScreen(state, lastSentMs = 0, nowMs = 125_000, advice = advice, onPairAgain = {}, onAdvice = {}, onStatus = {}, media = card)
 }
+
+@Preview(name = "Connecté, en lecture", widthDp = 360, heightDp = 560)
+@Composable
+private fun HomePlaying() = HomePreview(LinkState.Connected("Bureau", 0, setOf("battery", "media"), setOf("battery", "media")), playing = "FROGZ")
+
+@Preview(name = "Connecté, rien en lecture, cyan", widthDp = 360, heightDp = 560)
+@Composable
+private fun HomeNothing() = HomePreview(LinkState.Connected("Bureau", 0, setOf("battery", "media"), setOf("battery", "media")), seed = 0xFF22B8CF.toInt())
 
 @Preview(name = "Connecté, orange", widthDp = 360, heightDp = 560)
 @Composable

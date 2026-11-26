@@ -46,9 +46,15 @@ import fr.kingsrequin.horizon.design.HorizonIcons
 import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.LocalHorizonColors
 import fr.kingsrequin.horizon.design.components.BarreNavigation
+import fr.kingsrequin.horizon.design.components.CarteLecture
 import fr.kingsrequin.horizon.design.components.Onglet
 import fr.kingsrequin.horizon.home.HomeScreen
 import fr.kingsrequin.horizon.link.LinkState
+import fr.kingsrequin.horizon.protocol.ToPc
+import fr.kingsrequin.horizon.remote.Access
+import fr.kingsrequin.horizon.remote.RemoteRoute
+import fr.kingsrequin.horizon.remote.rememberCover
+import fr.kingsrequin.horizon.remote.remoteAccess
 import fr.kingsrequin.horizon.pairing.PairingFlow
 import fr.kingsrequin.horizon.pairing.PairingStep
 import fr.kingsrequin.horizon.pairing.PairingViewModel
@@ -67,6 +73,9 @@ import kotlinx.coroutines.launch
 private const val REPOSITORY = "https://github.com/KingsRequin/horizon-mobile"
 private const val PREFS = "appli"
 private const val KEY_CONNECTED_ONCE = "deja-connecte"
+
+/** Les onglets de la barre de navigation ; la télécommande n'existe que si le PC la sait faire. */
+private enum class Tab { Home, Remote, Settings }
 
 /**
  * Ce que l'appli montre : rien tant que l'appairage n'est pas relu, le parcours d'appairage sans
@@ -120,7 +129,12 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val prefs = remember { context.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var tab by rememberSaveable { mutableStateOf(Tab.Home) }
+    // Hors ligne, l'onglet Télécommande reste tel que la dernière session l'a laissé.
+    var access by rememberSaveable { mutableStateOf(Access.Hidden) }
+    (state as? LinkState.Connected)?.let { access = remoteAccess(it.features, it.granted) }
+    val tabs = listOfNotNull(Tab.Home, Tab.Remote.takeIf { access != Access.Hidden }, Tab.Settings)
+    if (tab !in tabs) tab = Tab.Home
     var mode by remember { mutableStateOf(Link.mode) }
     val version = remember { context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty() }
     val exitReason = remember { lastExitReason(context) }
@@ -153,8 +167,8 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
 
     Column(Modifier.fillMaxSize().background(LocalHorizonColors.current.surface)) {
         val content = Modifier.weight(1f)
-        if (tab == 0) {
-            HomeScreen(
+        when (tab) {
+            Tab.Home -> HomeScreen(
                 state = state,
                 lastSentMs = Link.reporter.lastSentMs,
                 nowMs = now,
@@ -165,11 +179,16 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
                     val exemption = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.fromParts("package", context.packageName, null))
                     if (it != Advice.AllowBackground || !open(context, exemption)) open(context, appDetails)
                 },
-                onStatus = { tab = 1 },
+                onStatus = { tab = Tab.Settings },
                 modifier = content,
+                media = if (access == Access.Granted) {
+                    { PlayingCard(onOpen = { tab = Tab.Remote }) }
+                } else {
+                    null
+                },
             )
-        } else {
-            SettingsScreen(
+            Tab.Remote -> RemoteRoute(connected = state is LinkState.Connected, access = access, modifier = content)
+            Tab.Settings -> SettingsScreen(
                 mode = mode,
                 pcName = pcName,
                 version = version,
@@ -198,12 +217,33 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
                 modifier = content,
             )
         }
+        val labels = mapOf(
+            Tab.Home to Onglet(HorizonIcons.House, stringResource(R.string.tab_home)),
+            Tab.Remote to Onglet(HorizonIcons.Play, stringResource(R.string.tab_remote)),
+            Tab.Settings to Onglet(HorizonIcons.GearSix, stringResource(R.string.tab_settings)),
+        )
         BarreNavigation(
-            tabs = listOf(Onglet(HorizonIcons.House, stringResource(R.string.tab_home)), Onglet(HorizonIcons.GearSix, stringResource(R.string.tab_settings))),
-            current = tab,
-            onSelect = { tab = it },
+            tabs = tabs.map { labels.getValue(it) },
+            current = tabs.indexOf(tab),
+            onSelect = { tab = tabs[it] },
         )
     }
+}
+
+/** La carte de lecture de l'accueil, branchée sur ce que le PC dit de sa lecture. */
+@Composable
+private fun PlayingCard(onOpen: () -> Unit) {
+    val view by Link.remote.view.collectAsStateWithLifecycle()
+    val media = view.media
+    CarteLecture(
+        image = rememberCover(view.art),
+        title = media?.let { it.title.ifBlank { it.appName } },
+        artist = media?.artist,
+        playing = media?.playing == true,
+        onPlayPause = { Link.command(ToPc.MediaCommand("play_pause")) },
+        onNext = { Link.command(ToPc.MediaCommand("next")) },
+        onOpen = onOpen,
+    )
 }
 
 /** Ouvre un écran d'une autre appli ou du système ; faux s'il n'existe pas sur ce téléphone. */

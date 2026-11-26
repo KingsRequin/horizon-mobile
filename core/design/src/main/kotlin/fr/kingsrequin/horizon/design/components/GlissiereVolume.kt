@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
@@ -67,10 +69,11 @@ private val MinRest = 64.dp
  * partie active (la toucher coupe ou rétablit le son), la valeur dans la partie éteinte. Glisser
  * ou toucher règle le volume (`onVolume`, de 0 à 1), avec un cran tous les 5 % et un plus net
  * aux extrémités. Muet : partie active éteinte, icône barrée, le mot « Muet ». Pour TalkBack :
- * une glissière, « 72 pour cent », réglable par les gestes de volume.
+ * une glissière, « 72 pour cent », réglable par les gestes de volume. `enabled` faux (volume du PC
+ * inconnu) : estompée, sans réaction, mais toujours à sa place.
  */
 @Composable
-fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, onMute: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, onMute: (Boolean) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val colors = LocalHorizonColors.current
     val haptics = LocalHapticFeedback.current
     val value = volume.coerceIn(0f, 1f)
@@ -82,6 +85,7 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
     val muteLabel = stringResource(if (muted) R.string.volume_unmute else R.string.volume_mute)
 
     fun change(target: Float) {
+        if (!enabled) return
         val next = (target.coerceIn(0f, 1f) * 100).roundToInt() / 100f
         if (next == current) return
         when (volumeTick(current, next)) {
@@ -92,7 +96,7 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
         send(next)
     }
 
-    BoxWithConstraints(modifier.fillMaxWidth().height(Height)) {
+    BoxWithConstraints(modifier.fillMaxWidth().height(Height).alpha(if (enabled) 1f else DIMMED)) {
         val density = LocalDensity.current
         val track = maxWidth - Gap * 2 - 4.dp - MinOn - MinRest
         val onWidth = MinOn + track * value
@@ -107,6 +111,7 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
                 .semantics {
                     contentDescription = label
                     stateDescription = spoken
+                    if (!enabled) disabled()
                     progressBarRangeInfo = ProgressBarRangeInfo(value, 0f..1f, steps = 19)
                     setProgress { target ->
                         change(target)
@@ -136,7 +141,7 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
                         .padding(start = HorizonSpace.s1)
                         .size(HorizonSize.touchMin)
                         .clip(RoundedCornerShape(12.dp))
-                        .clickable(role = Role.Button) { onMute(!muted) },
+                        .clickable(enabled = enabled, role = Role.Button) { onMute(!muted) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -157,7 +162,12 @@ fun GlissiereVolume(volume: Float, muted: Boolean, onVolume: (Float) -> Unit, on
                     .padding(end = 14.dp),
                 contentAlignment = Alignment.CenterEnd,
             ) {
-                Text(if (muted) stringResource(R.string.volume_muted) else stringResource(R.string.volume_value, percent), style = HorizonType.numeralSmall, color = colors.onSurfaceVariant, maxLines = 1)
+                val shown = when {
+                    !enabled -> "–"
+                    muted -> stringResource(R.string.volume_muted)
+                    else -> stringResource(R.string.volume_value, percent)
+                }
+                Text(shown, style = HorizonType.numeralSmall, color = colors.onSurfaceVariant, maxLines = 1)
             }
         }
     }

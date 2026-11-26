@@ -40,6 +40,13 @@
     <!-- Home -->
     <string name="tab_home">Home</string>
     <string name="tab_settings">Settings</string>
+    <string name="tab_remote">Remote</string>
+
+    <!-- Remote -->
+    <string name="remote_offline">PC not connected</string>
+    <string name="remote_choose_player">Choose the player</string>
+    <string name="remote_to_grant">Remote not allowed</string>
+    <string name="remote_to_grant_detail">On the PC, open Horizon › Settings › Phone and tick “Remote” under this phone.</string>
     <string name="status_connected">Connected · local network</string>
     <string name="status_connecting">Reconnecting…</string>
     <string name="status_offline_seen">Offline · seen %1$s</string>

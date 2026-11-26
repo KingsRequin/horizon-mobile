@@ -15,6 +15,8 @@ import fr.kingsrequin.horizon.link.ConnectionManager
 import fr.kingsrequin.horizon.link.LinkLog
 import fr.kingsrequin.horizon.link.LinkState
 import fr.kingsrequin.horizon.link.OkHttpTransport
+import fr.kingsrequin.horizon.link.Remote
+import fr.kingsrequin.horizon.protocol.ToPc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,6 +34,8 @@ object Link {
     private const val TAG = "Liaison"
     private const val PREFS = "liaison"
     private const val KEY_MODE = "mode"
+    private const val MEDIA = "media"
+    private const val VOLUME = "volume"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     /** L'application, pas un écran : elle vit autant que le processus. */
@@ -42,6 +46,12 @@ object Link {
         private set
     lateinit var reporter: BatteryReporter
         private set
+
+    /** Ce que le PC dit de sa lecture et de son volume ; remis à zéro à chaque session finie. */
+    val remote = Remote(System::currentTimeMillis)
+
+    /** Écrans qui regardent le volume du PC (la télécommande) : il n'est envoyé que pendant ce temps. */
+    private var volumeWatchers = 0
 
     /** Derniers événements de la liaison, pour le rapport de diagnostic. */
     val log = LinkLog()
@@ -74,9 +84,26 @@ object Link {
             reporter.reset()
             sendBattery(currentBattery())
         }
+        // L'état du média est suivi tant que la liaison est ouverte (carte de l'accueil, commandes
+        // du système) : le PC n'envoie que ses changements, et une pochette par morceau.
+        manager.onPcMessage = remote::apply
+        manager.watch(setOf(MEDIA))
+        scope.launch { manager.state.map { it is LinkState.Connected }.distinctUntilChanged().collect { if (!it) remote.reset() } }
         lan = LanNetwork(app, manager::onNetwork)
         // Le service suit l'appairage : il démarre avec lui et s'arrête quand le PC est oublié.
         scope.launch { manager.state.map(::paired).distinctUntilChanged().collect { apply() } }
+    }
+
+    /** Un écran commence (`true`) ou cesse de regarder le volume du PC. */
+    @Synchronized
+    fun watchVolume(on: Boolean) {
+        volumeWatchers = (volumeWatchers + if (on) 1 else -1).coerceAtLeast(0)
+        manager.watch(if (volumeWatchers > 0) setOf(MEDIA, VOLUME) else setOf(MEDIA))
+    }
+
+    /** Une commande de la télécommande ; sans session, elle provoque un essai et se perd. */
+    fun command(msg: ToPc) {
+        manager.send(msg)
     }
 
     /** L'appli vient à l'écran, ou le quitte. */

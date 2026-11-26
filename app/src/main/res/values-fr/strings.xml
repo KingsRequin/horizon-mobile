@@ -38,6 +38,13 @@
     <!-- Accueil -->
     <string name="tab_home">Accueil</string>
     <string name="tab_settings">Réglages</string>
+    <string name="tab_remote">Télécommande</string>
+
+    <!-- Télécommande -->
+    <string name="remote_offline">PC non relié</string>
+    <string name="remote_choose_player">Choisir le lecteur</string>
+    <string name="remote_to_grant">Télécommande non autorisée</string>
+    <string name="remote_to_grant_detail">Sur le PC, ouvre Horizon › Réglages › Téléphone et coche « Télécommande » sous ce téléphone.</string>
     <string name="status_connected">Connecté · réseau local</string>
     <string name="status_connecting">Reconnexion…</string>
     <string name="status_offline_seen">Hors ligne · vu %1$s</string>
