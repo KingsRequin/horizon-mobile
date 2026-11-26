@@ -18,7 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -54,13 +57,20 @@ import fr.kingsrequin.horizon.design.HorizonSpace
 import fr.kingsrequin.horizon.design.HorizonTheme
 import fr.kingsrequin.horizon.design.HorizonType
 import fr.kingsrequin.horizon.design.LocalHorizonColors
+import fr.kingsrequin.horizon.design.components.BoutonSortie
 import fr.kingsrequin.horizon.design.components.GlissiereVolume
+import fr.kingsrequin.horizon.design.components.Groupe
+import fr.kingsrequin.horizon.design.components.LigneMixeur
+import fr.kingsrequin.horizon.design.components.LigneReglage
 import fr.kingsrequin.horizon.design.components.Pochette
 import fr.kingsrequin.horizon.design.components.Progression
 import fr.kingsrequin.horizon.design.components.Transport
 import fr.kingsrequin.horizon.link.MediaNow
+import fr.kingsrequin.horizon.link.MixerNow
 import fr.kingsrequin.horizon.link.RemoteView
 import fr.kingsrequin.horizon.link.positionAt
+import fr.kingsrequin.horizon.protocol.AppInfo
+import fr.kingsrequin.horizon.protocol.OutputInfo
 import fr.kingsrequin.horizon.protocol.SessionInfo
 import fr.kingsrequin.horizon.protocol.ToPc
 import kotlinx.coroutines.delay
@@ -76,6 +86,9 @@ class RemoteActions(
     val select: (String) -> Unit,
     val volume: (Float) -> Unit,
     val mute: (Boolean) -> Unit,
+    val appVolume: (String, Float) -> Unit = { _, _ -> },
+    val appMute: (String, Boolean) -> Unit = { _, _ -> },
+    val output: (String) -> Unit = {},
 )
 
 /** Pause entre deux envois du volume pendant un glissé : la valeur finale part toujours. */
@@ -86,7 +99,7 @@ private const val VOLUME_EVERY_MS = 50L
  * l'écran, fait avancer la position pendant la lecture et espace les envois du volume.
  */
 @Composable
-fun RemoteRoute(connected: Boolean, access: Access, modifier: Modifier = Modifier) {
+fun RemoteRoute(connected: Boolean, access: Access, sound: Access, modifier: Modifier = Modifier) {
     val view by Link.remote.view.collectAsStateWithLifecycle()
     LifecycleResumeEffect(Unit) {
         Link.watch("volume", true)
@@ -113,6 +126,14 @@ fun RemoteRoute(connected: Boolean, access: Access, modifier: Modifier = Modifie
             delay(VOLUME_EVERY_MS)
         }
     }
+    // Jauges des applis : on n'en règle qu'une à la fois, la dernière valeur part toujours.
+    val appVolumes = remember { MutableSharedFlow<Pair<String, Float>>(extraBufferCapacity = 1) }
+    LaunchedEffect(Unit) {
+        appVolumes.conflate().collect { (key, volume) ->
+            Link.command(ToPc.MixerAppVolume(key, volume))
+            delay(VOLUME_EVERY_MS)
+        }
+    }
     val actions = remember {
         RemoteActions(
             playPause = { Link.command(ToPc.MediaCommand("play_pause")) },
@@ -125,9 +146,15 @@ fun RemoteRoute(connected: Boolean, access: Access, modifier: Modifier = Modifie
                 volumes.tryEmit(it)
             },
             mute = { Link.command(ToPc.VolumeMute(it)) },
+            appVolume = { key, volume ->
+                Link.remote.localAppVolume(key, volume)
+                appVolumes.tryEmit(key to volume)
+            },
+            appMute = { key, muted -> Link.command(ToPc.MixerAppMute(key, muted)) },
+            output = { Link.command(ToPc.MixerOutput(it)) },
         )
     }
-    RemoteScreen(view, rememberCover(view.art), connected, access, now, actions, modifier)
+    RemoteScreen(view, rememberCover(view.art), connected, access, now, actions, modifier, sound)
 }
 
 /** La pochette reçue, décodée une fois par image. */
@@ -135,13 +162,16 @@ fun RemoteRoute(connected: Boolean, access: Access, modifier: Modifier = Modifie
 fun rememberCover(art: ByteArray?): ImageBitmap? = remember(art) { art?.let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() } }
 
 /**
- * La télécommande : grande pochette, titre, artiste, choix du lecteur s'il y en a plusieurs,
- * progression, puis, dans la moitié basse, les commandes et le volume (toujours visible).
- * `access` à accorder : seulement où l'accorder.
+ * La télécommande : la sortie audio en haut, grande pochette, titre, artiste, choix du lecteur
+ * s'il y en a plusieurs, progression, puis, dans la moitié basse, les commandes et le volume
+ * (toujours visible), et sous lui le volume de chaque appli. `access` à accorder : seulement où
+ * l'accorder ; `sound` (mixeur et sortie) a son propre accès.
  */
 @Composable
-fun RemoteScreen(view: RemoteView, cover: ImageBitmap?, connected: Boolean, access: Access, nowMs: Long, actions: RemoteActions, modifier: Modifier = Modifier) {
+fun RemoteScreen(view: RemoteView, cover: ImageBitmap?, connected: Boolean, access: Access, nowMs: Long, actions: RemoteActions, modifier: Modifier = Modifier, sound: Access = Access.Hidden) {
     val colors = LocalHorizonColors.current
+    val mixer = view.mixer.takeIf { sound == Access.Granted }
+    var choosingOutput by rememberSaveable { mutableStateOf(false) }
     BoxWithConstraints(modifier.fillMaxSize().background(colors.surface).statusBarsPadding()) {
         Column(
             Modifier.verticalScroll(rememberScrollState()).heightIn(min = maxHeight).padding(horizontal = HorizonSpace.s4),
@@ -152,6 +182,18 @@ fun RemoteScreen(view: RemoteView, cover: ImageBitmap?, connected: Boolean, acce
             if (access != Access.Granted) {
                 ToGrant()
                 return@Column
+            }
+            if (mixer != null && mixer.outputs.isNotEmpty()) {
+                val current = mixer.outputs.firstOrNull { it.id == mixer.defaultOutput } ?: mixer.outputs.first()
+                Row(Modifier.fillMaxWidth()) {
+                    BoutonSortie(
+                        name = current.name,
+                        headset = current.kind == "headset",
+                        several = mixer.outputs.size > 1,
+                        onNext = { nextOutput(mixer.outputs.map { it.id }, mixer.defaultOutput)?.let(actions.output) },
+                        onChoose = { choosingOutput = true },
+                    )
+                }
             }
             val media = view.media
             Pochette(cover.takeIf { media != null }, 172.dp)
@@ -179,7 +221,40 @@ fun RemoteScreen(view: RemoteView, cover: ImageBitmap?, connected: Boolean, acce
                 onNext = actions.next,
             )
             GlissiereVolume(view.volume ?: 0f, view.muted, actions.volume, actions.mute, enabled = view.volume != null)
+            if (mixer != null && mixer.apps.isNotEmpty()) {
+                Groupe(Modifier.fillMaxWidth()) {
+                    mixer.apps.forEach { app ->
+                        LigneMixeur(app.name, app.volume, app.muted, { actions.appVolume(app.key, it) }, { actions.appMute(app.key, it) })
+                    }
+                }
+            }
+            if (sound == Access.ToGrant) {
+                Text(stringResource(R.string.remote_sound_to_grant), style = HorizonType.bodySmall, color = colors.onSurfaceVariant, modifier = Modifier.fillMaxWidth())
+            }
             Spacer(Modifier.height(HorizonSpace.s4))
+        }
+    }
+    if (choosingOutput && mixer != null) {
+        OutputSheet(mixer, onPick = {
+            choosingOutput = false
+            if (it != mixer.defaultOutput) actions.output(it)
+        }, onDismiss = { choosingOutput = false })
+    }
+}
+
+/** La liste des sorties audio du PC, en feuille du bas ; la sortie en cours est cochée. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OutputSheet(mixer: MixerNow, onPick: (String) -> Unit, onDismiss: () -> Unit) {
+    val colors = LocalHorizonColors.current
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = colors.surfaceContainerHigh) {
+        Column(Modifier.padding(HorizonSpace.s4).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(HorizonSpace.s2)) {
+            Text(stringResource(R.string.output_sheet_title), style = HorizonType.titleMedium, color = colors.onSurface, modifier = Modifier.padding(start = HorizonSpace.s2))
+            Groupe {
+                mixer.outputs.forEach { output ->
+                    LigneReglage(output.name, selected = output.id == mixer.defaultOutput) { onPick(output.id) }
+                }
+            }
         }
     }
 }
@@ -240,14 +315,24 @@ private fun song(playing: Boolean = true, duration: Long = 233_000) = MediaNow("
 
 private val twoPlayers = listOf(SessionInfo("Spotify.exe", "Spotify"), SessionInfo("Chrome", "Google Chrome"))
 
+private val previewMixer = MixerNow(
+    listOf(OutputInfo("o1", "Casque", "headset"), OutputInfo("o2", "Enceintes", "speaker")),
+    "o1",
+    listOf(AppInfo("spotify.exe", "Spotify", 0.8f, false, true), AppInfo("discord.exe", "Discord", 0.55f, true, false)),
+)
+
 @Composable
-private fun RemotePreview(view: RemoteView, access: Access = Access.Granted, connected: Boolean = true, seed: Int = 0xFFF97316.toInt()) = HorizonTheme(seed) {
-    RemoteScreen(view, null, connected, access, 0, previewActions)
+private fun RemotePreview(view: RemoteView, access: Access = Access.Granted, connected: Boolean = true, seed: Int = 0xFFF97316.toInt(), sound: Access = Access.Granted) = HorizonTheme(seed) {
+    RemoteScreen(view, null, connected, access, 0, previewActions, sound = sound)
 }
 
-@Preview(name = "En lecture, deux lecteurs", widthDp = 360, heightDp = 740)
+@Preview(name = "En lecture, deux lecteurs, mixeur", widthDp = 360, heightDp = 1000)
 @Composable
-private fun RemotePlaying() = RemotePreview(RemoteView(song(), twoPlayers, null, 0.72f, false))
+private fun RemotePlaying() = RemotePreview(RemoteView(song(), twoPlayers, null, 0.72f, false, previewMixer))
+
+@Preview(name = "Son et actions à autoriser", widthDp = 360, heightDp = 800)
+@Composable
+private fun RemoteSoundToGrant() = RemotePreview(RemoteView(song(), twoPlayers, null, 0.72f, false), sound = Access.ToGrant)
 
 @Preview(name = "En pause, violet", widthDp = 360, heightDp = 740)
 @Composable

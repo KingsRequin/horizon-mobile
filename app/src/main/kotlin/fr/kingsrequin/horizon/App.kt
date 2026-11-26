@@ -55,6 +55,8 @@ import fr.kingsrequin.horizon.remote.Access
 import fr.kingsrequin.horizon.remote.RemoteRoute
 import fr.kingsrequin.horizon.remote.rememberCover
 import fr.kingsrequin.horizon.remote.remoteAccess
+import fr.kingsrequin.horizon.remote.soundAccess
+import fr.kingsrequin.horizon.home.HomeActionsRoute
 import fr.kingsrequin.horizon.pairing.PairingFlow
 import fr.kingsrequin.horizon.pairing.PairingStep
 import fr.kingsrequin.horizon.pairing.PairingViewModel
@@ -132,7 +134,11 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
     var tab by rememberSaveable { mutableStateOf(Tab.Home) }
     // Hors ligne, l'onglet Télécommande reste tel que la dernière session l'a laissé.
     var access by rememberSaveable { mutableStateOf(Access.Hidden) }
-    (state as? LinkState.Connected)?.let { access = remoteAccess(it.features, it.granted) }
+    var sound by rememberSaveable { mutableStateOf(Access.Hidden) }
+    (state as? LinkState.Connected)?.let {
+        access = remoteAccess(it.features, it.granted)
+        sound = soundAccess(it.features, it.granted)
+    }
     val tabs = listOfNotNull(Tab.Home, Tab.Remote.takeIf { access != Access.Hidden }, Tab.Settings)
     if (tab !in tabs) tab = Tab.Home
     var mode by remember { mutableStateOf(Link.mode) }
@@ -187,8 +193,13 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
                 } else {
                     null
                 },
+                actions = if (sound != Access.Hidden) {
+                    { HomeActionsRoute(sound) }
+                } else {
+                    null
+                },
             )
-            Tab.Remote -> RemoteRoute(connected = state is LinkState.Connected, access = access, modifier = content)
+            Tab.Remote -> RemoteRoute(connected = state is LinkState.Connected, access = access, sound = sound, modifier = content)
             Tab.Settings -> SettingsScreen(
                 mode = mode,
                 pcName = pcName,

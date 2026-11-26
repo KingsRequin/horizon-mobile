@@ -43,7 +43,8 @@ import fr.kingsrequin.horizon.ui.text
 
 /**
  * L'accueil : le PC et l'état de la liaison, la lecture en cours sur le PC (`media`, la carte de
- * lecture, si ce téléphone a la télécommande), ce que le téléphone lui envoie (jamais le
+ * lecture, si ce téléphone a la télécommande), les actions rapides et le casque du PC
+ * (`actions`, avec le droit « Son et actions »), ce que le téléphone lui envoie (jamais le
  * pourcentage : la barre d'Horizon est là pour ça), et au besoin une carte qui dit quoi faire.
  * `lastSentMs` : heure du dernier envoi de la batterie ; `nowMs` : l'heure, qui avance seule.
  */
@@ -58,6 +59,7 @@ fun HomeScreen(
     onStatus: () -> Unit,
     modifier: Modifier = Modifier,
     media: (@Composable () -> Unit)? = null,
+    actions: (@Composable () -> Unit)? = null,
 ) {
     val colors = LocalHorizonColors.current
     val res = LocalResources.current
@@ -94,6 +96,7 @@ fun HomeScreen(
             advice == Advice.WasKilled -> Card(stringResource(R.string.advice_killed), stringResource(R.string.advice_killed_detail), stringResource(R.string.pairing_open_settings)) { onAdvice(advice) }
         }
         media?.invoke()
+        actions?.invoke()
         Column(verticalArrangement = Arrangement.spacedBy(HorizonSpace.s2)) {
             Text(
                 stringResource(R.string.home_sent),
