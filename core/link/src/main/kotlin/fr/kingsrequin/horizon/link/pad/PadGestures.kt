@@ -37,7 +37,8 @@ data class PadSettings(
  * Reconnaît les gestes du pavé (comme un pavé tactile de portable) : un doigt glisse = pointeur ;
  * appui bref à un, deux ou trois doigts = clic gauche, droit, milieu ; deux doigts glissent =
  * défilement ; deux doigts s'écartent ou se rapprochent = zoom ; un appui puis un doigt reposé
- * aussitôt = bouton gauche tenu jusqu'au lever (glisser ; levé tout de suite : double clic).
+ * aussitôt = bouton gauche tenu dès que ce doigt bouge, jusqu'au lever (glisser ; levé sans
+ * bouger : second clic, donc double clic ; un second doigt : défilement ou clic droit).
  *
  * [touch] reçoit, à chaque changement, tous les doigts posés (liste vide : tous levés), et rend
  * ce qu'il faut faire. `slopPx` : distance en deçà de laquelle un doigt n'a pas bougé.
@@ -63,7 +64,14 @@ class PadGestures(var settings: PadSettings = PadSettings(), private val slopPx:
     private var moved = false
     private var multi = false
     private var two: Two? = null
+    /** Doigt du glisser, une fois le bouton gauche tenu. */
     private var dragId: Long? = null
+    /** Doigt reposé juste après un appui : glisser si le doigt bouge, double clic s'il se lève. */
+    private var armedId: Long? = null
+    /** Le doigt n'a encore rien déplacé : son mouvement est retenu tant que ce peut être un appui. */
+    private var holding = true
+    private var heldX = 0f
+    private var heldY = 0f
     private var lastTapUp: Long? = null
 
     fun touch(fingers: List<Finger>, timeMs: Long): List<PadAction> {
@@ -75,11 +83,23 @@ class PadGestures(var settings: PadSettings = PadSettings(), private val slopPx:
             if (hypot(f.x - s.x, f.y - s.y) > slopPx) moved = true
         }
         maxFingers = max(maxFingers, fingers.size)
-        if (fingers.size > 1) multi = true
+        if (fingers.size > 1) {
+            multi = true
+            // Un second doigt après un appui : défilement ou clic droit, pas un glisser.
+            armedId = null
+        }
         val drag = dragId
+        val armed = armedId
         when {
-            drag != null -> fingers.firstOrNull { it.id == drag }?.let { move(it, out) }
-            !multi -> move(fingers.single(), out)
+            drag != null -> fingers.firstOrNull { it.id == drag }?.let { slide(it, timeMs, out) }
+            armed != null -> fingers.firstOrNull { it.id == armed }?.let {
+                slide(it, timeMs, out) {
+                    armedId = null
+                    dragId = it.id
+                    out += PadAction.Down(Button.LEFT)
+                }
+            }
+            !multi -> slide(fingers.single(), timeMs, out)
             fingers.size == 2 && maxFingers == 2 -> twoFingers(fingers, out)
         }
         last.clear()
@@ -100,10 +120,7 @@ class PadGestures(var settings: PadSettings = PadSettings(), private val slopPx:
         gestureStart = timeMs
         val armed = fingers.size == 1 && lastTapUp?.let { timeMs - it <= DOUBLE_TAP_MS } == true
         lastTapUp = null
-        if (armed) {
-            dragId = fingers.single().id
-            out += PadAction.Down(Button.LEFT)
-        }
+        if (armed) armedId = fingers.single().id
     }
 
     private fun end(timeMs: Long): List<PadAction> {
@@ -111,6 +128,9 @@ class PadGestures(var settings: PadSettings = PadSettings(), private val slopPx:
         val mode = two?.mode ?: Mode.UNDECIDED
         if (dragId != null) {
             out += PadAction.Up(Button.LEFT)
+        } else if (armedId != null) {
+            // Second appui d'un double appui, sans glisser : le second clic.
+            out += PadAction.Click(Button.LEFT)
         } else if (timeMs - gestureStart <= TAP_MS && !moved && mode == Mode.UNDECIDED) {
             val button = when (maxFingers) {
                 1 -> Button.LEFT
@@ -132,12 +152,31 @@ class PadGestures(var settings: PadSettings = PadSettings(), private val slopPx:
         multi = false
         two = null
         dragId = null
+        armedId = null
+        holding = true
+        heldX = 0f
+        heldY = 0f
     }
 
-    private fun move(f: Finger, out: MutableList<PadAction>) {
+    /**
+     * Le doigt glisse : son mouvement est retenu tant que le geste peut encore être un appui (sous
+     * le seuil et avant [TAP_MS]) : un appui qui tremble ne déplace pas le pointeur, et Windows
+     * reconnaît le double clic (4 px au plus entre les deux). Ensuite, `onStart`, puis tout le
+     * mouvement retenu d'un coup, puis chaque mouvement aussitôt.
+     */
+    private fun slide(f: Finger, timeMs: Long, out: MutableList<PadAction>, onStart: () -> Unit = {}) {
         val p = last[f.id] ?: return
+        heldX += f.x - p.x
+        heldY += f.y - p.y
+        if (holding) {
+            if (!moved && timeMs - gestureStart < TAP_MS) return
+            holding = false
+            onStart()
+        }
         val speed = settings.pointerSpeed
-        if (f.x != p.x || f.y != p.y) out += PadAction.Move(plain((f.x - p.x) * speed), plain((f.y - p.y) * speed))
+        if (heldX != 0f || heldY != 0f) out += PadAction.Move(plain(heldX * speed), plain(heldY * speed))
+        heldX = 0f
+        heldY = 0f
     }
 
     private fun twoFingers(fingers: List<Finger>, out: MutableList<PadAction>) {

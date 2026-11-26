@@ -27,7 +27,7 @@ class PadGesturesTest {
     fun theSpeedScalesTheMove() {
         val p = PadGestures(PadSettings(pointerSpeed = 2f), slopPx = 20f)
         p.touch(listOf(f(0, 0f, 0f)), 0)
-        assertEquals(listOf(PadAction.Move(20f, 10f)), p.touch(listOf(f(0, 10f, 5f)), 16))
+        assertEquals(listOf(PadAction.Move(40f, 20f)), p.touch(listOf(f(0, 20f, 10f)), 16))
     }
 
     @Test
@@ -36,11 +36,20 @@ class PadGesturesTest {
     }
 
     @Test
-    fun aTremblingTapStillClicks() {
+    fun aTremblingTapClicksWithoutMovingThePointer() {
         val p = pad()
         p.touch(listOf(f(0, 100f, 100f)), 0)
-        assertEquals(listOf(PadAction.Move(4f, 3f)), p.touch(listOf(f(0, 104f, 103f)), 40))
+        assertEquals("un appui qui tremble ne déplace pas le pointeur (double clic de Windows : 4 px)", emptyList<PadAction>(), p.touch(listOf(f(0, 104f, 103f)), 40))
         assertEquals(listOf(PadAction.Click(Button.LEFT)), p.touch(emptyList(), 120))
+    }
+
+    @Test
+    fun aSlowSmallMoveIsSentOnceItIsNoLongerATap() {
+        val p = pad()
+        p.touch(listOf(f(0, 100f, 100f)), 0)
+        assertEquals(emptyList<PadAction>(), p.touch(listOf(f(0, 105f, 100f)), 100))
+        assertEquals("passé la durée d'un appui, le mouvement retenu part avec le nouveau", listOf(PadAction.Move(10f, 0f)), p.touch(listOf(f(0, 110f, 100f)), 300))
+        assertEquals(listOf(PadAction.Move(2f, 0f)), p.touch(listOf(f(0, 112f, 100f)), 316))
     }
 
     @Test
@@ -65,16 +74,17 @@ class PadGesturesTest {
     fun aDoubleTapGivesADoubleClick() {
         val p = pad()
         assertEquals(listOf(PadAction.Click(Button.LEFT)), p.tap(0))
-        assertEquals(listOf(PadAction.Down(Button.LEFT)), p.touch(listOf(f(1, 102f, 101f)), 200))
-        assertEquals("clic, appui, relâche : Windows voit un double clic", listOf(PadAction.Up(Button.LEFT)), p.touch(emptyList(), 260))
+        assertEquals(emptyList<PadAction>(), p.touch(listOf(f(1, 102f, 101f)), 200))
+        assertEquals("tremblement du second appui : retenu", emptyList<PadAction>(), p.touch(listOf(f(1, 105f, 103f)), 220))
+        assertEquals("deux clics au même endroit : Windows voit un double clic", listOf(PadAction.Click(Button.LEFT)), p.touch(emptyList(), 260))
     }
 
     @Test
     fun aDoubleTapHeldDragsUntilTheFingerLifts() {
         val p = pad()
         p.tap(0)
-        assertEquals(listOf(PadAction.Down(Button.LEFT)), p.touch(listOf(f(1, 100f, 100f)), 200))
-        assertEquals(listOf(PadAction.Move(50f, 0f)), p.touch(listOf(f(1, 150f, 100f)), 300))
+        assertEquals(emptyList<PadAction>(), p.touch(listOf(f(1, 100f, 100f)), 200))
+        assertEquals("le bouton se tient au premier vrai mouvement", listOf(PadAction.Down(Button.LEFT), PadAction.Move(50f, 0f)), p.touch(listOf(f(1, 150f, 100f)), 300))
         assertEquals("un second doigt ne change rien au glisser", emptyList<PadAction>(), p.touch(listOf(f(1, 150f, 100f), f(2, 200f, 200f)), 350))
         assertEquals(listOf(PadAction.Move(0f, 30f)), p.touch(listOf(f(1, 150f, 130f)), 400))
         assertEquals(listOf(PadAction.Up(Button.LEFT)), p.touch(emptyList(), 2_000))
@@ -86,6 +96,25 @@ class PadGesturesTest {
         p.tap(0)
         assertEquals(emptyList<PadAction>(), p.touch(listOf(f(1, 100f, 100f)), 700))
         assertEquals(listOf(PadAction.Click(Button.LEFT)), p.touch(emptyList(), 780))
+    }
+
+    @Test
+    fun aTapThenTwoFingersScrollInsteadOfDragging() {
+        val p = pad()
+        p.tap(0)
+        assertEquals(emptyList<PadAction>(), p.touch(listOf(f(1, 100f, 100f)), 150))
+        assertEquals(emptyList<PadAction>(), p.touch(listOf(f(1, 100f, 100f), f(2, 160f, 100f)), 170))
+        assertEquals(listOf(PadAction.Scroll(0f, 30f)), p.touch(listOf(f(1, 100f, 130f), f(2, 160f, 130f)), 186))
+        assertEquals(emptyList<PadAction>(), p.touch(emptyList(), 300))
+    }
+
+    @Test
+    fun aTapThenATwoFingerTapIsARightClick() {
+        val p = pad()
+        p.tap(0)
+        p.touch(listOf(f(1, 100f, 100f)), 150)
+        p.touch(listOf(f(1, 100f, 100f), f(2, 160f, 100f)), 170)
+        assertEquals(listOf(PadAction.Click(Button.RIGHT)), p.touch(emptyList(), 240))
     }
 
     @Test
@@ -143,6 +172,8 @@ class PadGesturesTest {
         val p = pad()
         p.tap(0)
         p.touch(listOf(f(1, 100f, 100f)), 200)
+        assertEquals("rien de tenu avant le mouvement", emptyList<PadAction>(), PadGestures().apply { tap(0); touch(listOf(f(1, 100f, 100f)), 200) }.cancel())
+        p.touch(listOf(f(1, 150f, 100f)), 300)
         assertEquals(listOf(PadAction.Up(Button.LEFT)), p.cancel())
         assertEquals("rien de tenu : rien à relâcher", emptyList<PadAction>(), p.cancel())
     }

@@ -132,10 +132,8 @@ fun PadRoute(connected: Boolean, access: Access, onClose: () -> Unit, modifier: 
     val scope = rememberCoroutineScope()
     val sender = remember { PadSender { Link.command(it) } }
     val flushing = remember { arrayOfNulls<Job>(1) }
-    fun act(actions: List<PadAction>) {
-        val now = SystemClock.uptimeMillis()
-        actions.forEach { sender.act(it, now) }
-        // Ce qui attend part au plus tard un intervalle plus tard, puis la boucle s'arrête.
+    // Ce qui attend part au plus tard un intervalle plus tard, puis la boucle s'arrête.
+    fun drain() {
         if (sender.pending && flushing[0]?.isActive != true) {
             flushing[0] = scope.launch {
                 while (sender.pending) {
@@ -144,6 +142,11 @@ fun PadRoute(connected: Boolean, access: Access, onClose: () -> Unit, modifier: 
                 }
             }
         }
+    }
+    fun act(actions: List<PadAction>) {
+        val now = SystemClock.uptimeMillis()
+        actions.forEach { sender.act(it, now) }
+        drain()
     }
     DisposableEffect(Unit) {
         onDispose {
@@ -158,8 +161,8 @@ fun PadRoute(connected: Boolean, access: Access, onClose: () -> Unit, modifier: 
             touch = { fingers, time -> act(gestures.touch(fingers, time)) },
             button = { button, down -> act(listOf(if (down) PadAction.Down(button) else PadAction.Up(button))) },
             send = { messages ->
-                sender.sendNow(SystemClock.uptimeMillis())
-                messages.forEach(Link::command)
+                sender.queue(messages, SystemClock.uptimeMillis())
+                drain()
             },
             settings = {
                 settings = it
@@ -255,11 +258,20 @@ private fun TouchSurface(connected: Boolean, onTouch: (List<Finger>, Long) -> Un
     }
 }
 
-/** Un bouton de la souris : enfoncé tant que le doigt reste dessus (glisser possible). */
+/**
+ * Un bouton de la souris : enfoncé tant que le doigt reste dessus (glisser possible). Pavé fermé
+ * pendant qu'il est tenu (retour avec l'autre main) : il est relâché, rien ne reste enfoncé sur le PC.
+ */
 @Composable
 private fun RowScope.HoldButton(label: String, onPress: (Boolean) -> Unit) {
     val colors = LocalHorizonColors.current
     var down by remember { mutableStateOf(false) }
+    val press by rememberUpdatedState(onPress)
+    DisposableEffect(Unit) {
+        onDispose {
+            if (down) press(false)
+        }
+    }
     Box(
         Modifier
             .weight(1f)
@@ -398,7 +410,7 @@ private fun HiddenField(mods: Set<Mod>, onSend: (List<ToPc>, Boolean) -> Unit) {
                 }
                 post {
                     requestFocus()
-                    context.getSystemService(InputMethodManager::class.java).showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+                    context.getSystemService(InputMethodManager::class.java).showSoftInput(this, 0)
                 }
             }
         },

@@ -72,6 +72,29 @@ class PadSenderTest {
     }
 
     @Test
+    fun aBurstOfKeysIsPacedAtSixtyASecond() {
+        val burst = (1..10).map { ToPc.InputText("ligne $it") }
+        sender.queue(burst, 0)
+        assertEquals("le premier part tout de suite", listOf<ToPc>(ToPc.InputText("ligne 1")), sent)
+        assertEquals(true, sender.pending)
+        sender.flush(10)
+        assertEquals(1, sent.size)
+        for (t in 1..9) sender.flush(t * 16L)
+        assertEquals("un par intervalle, dans l'ordre", burst, sent)
+        assertEquals(false, sender.pending)
+    }
+
+    @Test
+    fun aClickWaitsForTheTextBeforeIt() {
+        sender.queue(listOf(ToPc.InputText("a"), ToPc.InputText("b")), 0)
+        sender.act(PadAction.Click(Button.LEFT), 1)
+        assertEquals("le clic ne double pas le texte qui attend", listOf<ToPc>(ToPc.InputText("a")), sent)
+        sender.flush(16)
+        sender.flush(32)
+        assertEquals(listOf(ToPc.InputText("a"), ToPc.InputText("b"), ToPc.InputButton("left", "click")), sent)
+    }
+
+    @Test
     fun nothingIsSentForAZeroMove() {
         sender.act(PadAction.Move(0.2f, 0.1f), 0)
         sender.flush(100)
