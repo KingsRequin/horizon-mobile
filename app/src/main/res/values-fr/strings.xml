@@ -122,10 +122,7 @@
     <string name="pad_copy">Copier</string>
     <string name="pad_cut">Couper</string>
     <string name="pad_desktop">Bureau</string>
-    <string name="pad_hint">Un doigt déplace le pointeur, un appui clique.
-Deux doigts font défiler, pincer zoome.
-Appui à deux doigts : clic droit ; à trois : clic du milieu.
-Double appui maintenu : glisser.</string>
+    <string name="pad_hint">Un doigt déplace le pointeur, un appui clique.\nDeux doigts font défiler, pincer zoome.\nAppui à deux doigts : clic droit ; à trois : clic du milieu.\nDouble appui maintenu : glisser.</string>
     <string name="pad_keyboard">Clavier</string>
     <string name="pad_left">Gauche</string>
     <string name="pad_natural">Défilement naturel</string>

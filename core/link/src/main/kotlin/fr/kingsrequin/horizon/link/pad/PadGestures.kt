@@ -27,7 +27,7 @@ sealed interface PadAction {
  * `buttons` : boutons gauche et droit sous le pavé.
  */
 data class PadSettings(
-    val pointerSpeed: Float = 1.5f,
+    val pointerSpeed: Float = 2f,
     val scrollSpeed: Float = 3f,
     val naturalScroll: Boolean = true,
     val buttons: Boolean = true,

@@ -124,10 +124,7 @@
     <string name="pad_copy">Copy</string>
     <string name="pad_cut">Cut</string>
     <string name="pad_desktop">Desktop</string>
-    <string name="pad_hint">One finger moves the pointer, a tap clicks.
-Two fingers scroll, a pinch zooms.
-Tap with two fingers for a right click, three for a middle click.
-Double tap and hold to drag.</string>
+    <string name="pad_hint">One finger moves the pointer, a tap clicks.\nTwo fingers scroll, a pinch zooms.\nTap with two fingers for a right click, three for a middle click.\nDouble tap and hold to drag.</string>
     <string name="pad_keyboard">Keyboard</string>
     <string name="pad_left">Left</string>
     <string name="pad_natural">Natural scrolling</string>

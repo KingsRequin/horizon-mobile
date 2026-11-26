@@ -1,6 +1,11 @@
 package fr.kingsrequin.horizon.pad
 
 import android.content.Context
+import android.os.Build
+import android.text.InputType
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -24,10 +29,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -37,7 +38,6 @@ import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,28 +46,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.widget.doAfterTextChanged
 import androidx.core.content.edit
 import fr.kingsrequin.horizon.R
 import fr.kingsrequin.horizon.connection.Link
@@ -369,39 +364,51 @@ private fun KeyChip(label: String, description: String? = null, selected: Boolea
  * Champ invisible qui reçoit le clavier du téléphone. Il commence par un caractère invisible :
  * l'effacer, c'est un retour arrière sur le PC ; il repart alors de lui. `onSend` reçoit les
  * messages et s'il y avait du texte tapé (le modificateur collant a servi).
+ *
+ * Un `EditText` plutôt qu'un champ Compose : lui seul porte l'option « pas d'apprentissage »
+ * (mode incognito des claviers), car ce qui est tapé vers le PC peut être un mot de passe. Le type
+ * « mot de passe » ferait de même mais ouvre, sur certains téléphones, un clavier sécurisé
+ * sans accents ni autres langues.
  */
 @Composable
 private fun HiddenField(mods: Set<Mod>, onSend: (List<ToPc>, Boolean) -> Unit) {
-    val focus = remember { FocusRequester() }
-    val keyboard = LocalSoftwareKeyboardController.current
-    val field = rememberTextFieldState(SENTINEL)
     val currentMods by rememberUpdatedState(mods)
     val send by rememberUpdatedState(onSend)
-    LaunchedEffect(Unit) {
-        focus.requestFocus()
-        keyboard?.show()
-    }
-    // Chaque changement du champ (frappe, correction, effacement) devient des messages.
-    LaunchedEffect(field) {
-        var before = field.text.toString()
-        snapshotFlow { field.text.toString() }.collect { after ->
-            val edit = Typing.edit(before, after)
-            val messages = Typing.send(edit, currentMods)
-            if (messages.isNotEmpty()) send(messages, edit.inserted.isNotEmpty())
-            before = after
-            if (!after.startsWith(SENTINEL) || after.length >= FIELD_MAX) {
-                field.setTextAndPlaceCursorAtEnd(SENTINEL)
-                before = SENTINEL
+    AndroidView(
+        factory = { context ->
+            EditText(context).apply {
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                imeOptions = EditorInfo.IME_ACTION_NONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI or incognito()
+                background = null
+                setText(SENTINEL)
+                setSelection(SENTINEL.length)
+                var before = SENTINEL
+                doAfterTextChanged { text ->
+                    val after = text?.toString().orEmpty()
+                    if (after == before) return@doAfterTextChanged
+                    val edit = Typing.edit(before, after)
+                    val messages = Typing.send(edit, currentMods)
+                    if (messages.isNotEmpty()) send(messages, edit.inserted.isNotEmpty())
+                    before = after
+                    if (!after.startsWith(SENTINEL) || after.length >= FIELD_MAX) {
+                        before = SENTINEL
+                        setText(SENTINEL)
+                        setSelection(SENTINEL.length)
+                    }
+                }
+                post {
+                    requestFocus()
+                    context.getSystemService(InputMethodManager::class.java).showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+                }
             }
-        }
-    }
-    DisposableEffect(Unit) { onDispose { keyboard?.hide() } }
-    BasicTextField(
-        state = field,
-        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, keyboardType = KeyboardType.Text, imeAction = ImeAction.None),
-        modifier = Modifier.size(1.dp).alpha(0f).focusRequester(focus),
+        },
+        onRelease = { it.context.getSystemService(InputMethodManager::class.java).hideSoftInputFromWindow(it.windowToken, 0) },
+        modifier = Modifier.size(1.dp).alpha(0f),
     )
 }
+
+/** L'option « pas d'apprentissage » des claviers, qui n'existe qu'à partir d'Android 8. */
+private fun incognito(): Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING else 0
 
 @Composable
 private fun RoundIcon(icon: Int, description: String, selected: Boolean = false, onClick: () -> Unit) {
