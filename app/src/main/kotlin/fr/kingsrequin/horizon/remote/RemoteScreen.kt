@@ -89,11 +89,13 @@ private const val VOLUME_EVERY_MS = 50L
 fun RemoteRoute(connected: Boolean, access: Access, modifier: Modifier = Modifier) {
     val view by Link.remote.view.collectAsStateWithLifecycle()
     LifecycleResumeEffect(Unit) {
-        Link.watchVolume(true)
+        Link.watch("volume", true)
+        Link.watch("mixer", true)
         Link.volumeKeysOnPc = true
         onPauseOrDispose {
             Link.volumeKeysOnPc = false
-            Link.watchVolume(false)
+            Link.watch("mixer", false)
+            Link.watch("volume", false)
         }
     }
     val playing = view.media?.playing == true

@@ -41,6 +41,28 @@ class CodecTest {
     }
 
     @Test
+    fun theMixerAndActionStatesDecode() {
+        val outputs = listOf(OutputInfo("out-1", "Casque", "headset"), OutputInfo("out-2", "Enceintes", "speaker"))
+        val apps = listOf(AppInfo("spotify.exe", "Spotify", 0.8f, false, true), AppInfo("discord.exe", "Discord", 0.55f, true, false))
+        assertEquals(FromPc.MixerState(outputs, "out-1", apps), Codec.decode(example("mixer.state.json")))
+        val actions = FromPc.ActionsState(true, TimerInfo(760_000, 1_500_000, false), listOf(5, 15, 25, 45), HeadsetInfo("Casque", 92, false))
+        assertEquals(actions, Codec.decode(example("actions.state.json")))
+        assertEquals(FromPc.ActionsState(false, null, emptyList(), null), Codec.decode(example("actions.state-vide.json")))
+    }
+
+    @Test
+    fun theMixerAndActionCommandsMatchTheExamples() {
+        assertEquals(json(example("mixer.app_volume.json")), json(Codec.encode(ToPc.MixerAppVolume("spotify.exe", 0.4f))))
+        assertEquals(json(example("mixer.app_mute.json")), json(Codec.encode(ToPc.MixerAppMute("discord.exe", true))))
+        assertEquals(json(example("mixer.output.json")), json(Codec.encode(ToPc.MixerOutput("{0.0.0.00000000}.{5a1c}"))))
+        assertEquals(json(example("action.lock.json")), json(Codec.encode(ToPc.ActionLock)))
+        assertEquals(json(example("action.dnd.json")), json(Codec.encode(ToPc.ActionDnd(true))))
+        assertEquals(json(example("timer.start.json")), json(Codec.encode(ToPc.TimerStart(25))))
+        assertEquals(json(example("timer.pause.json")), json(Codec.encode(ToPc.TimerPause(true))))
+        assertEquals(json(example("timer.stop.json")), json(Codec.encode(ToPc.TimerStop)))
+    }
+
+    @Test
     fun anOldPcHelloHasNoGrantedList() {
         assertEquals(FromPc.HelloOk("pc-1", "Bureau", 1, listOf("battery"), "#f97316", granted = null), Codec.decode(example("hello.ok-sans-droits.json")))
     }

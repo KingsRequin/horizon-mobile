@@ -41,8 +41,6 @@ object Link {
 
     /** Pas d'une touche de volume sur le volume du PC. */
     private const val VOLUME_KEY_STEP = 0.02f
-    private const val MEDIA = "media"
-    private const val VOLUME = "volume"
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     /** L'application, pas un écran : elle vit autant que le processus. */
@@ -57,8 +55,11 @@ object Link {
     /** Ce que le PC dit de sa lecture et de son volume ; remis à zéro à chaque session finie. */
     val remote = Remote(System::currentTimeMillis)
 
-    /** Écrans qui regardent le volume du PC (la télécommande) : il n'est envoyé que pendant ce temps. */
-    private var volumeWatchers = 0
+    /**
+     * Écrans qui regardent chaque sujet (`volume` et `mixer` : la télécommande ; `actions` :
+     * l'accueil) : le PC ne les envoie que pendant ce temps.
+     */
+    private val watchers = mutableMapOf<String, Int>()
 
     private val systemControlsState = MutableStateFlow(true)
 
@@ -104,18 +105,18 @@ object Link {
         // L'état du média est suivi tant que la liaison est ouverte (carte de l'accueil, commandes
         // du système) : le PC n'envoie que ses changements, et une pochette par morceau.
         manager.onPcMessage = remote::apply
-        manager.watch(setOf(MEDIA))
+        manager.watch(watchedTopics(emptyMap()))
         scope.launch { manager.state.map { it is LinkState.Connected }.distinctUntilChanged().collect { if (!it) remote.reset() } }
         lan = LanNetwork(app, manager::onNetwork)
         // Le service suit l'appairage : il démarre avec lui et s'arrête quand le PC est oublié.
         scope.launch { manager.state.map(::paired).distinctUntilChanged().collect { apply() } }
     }
 
-    /** Un écran commence (`true`) ou cesse de regarder le volume du PC. */
+    /** Un écran commence (`true`) ou cesse de regarder `topic` (`volume`, `mixer`, `actions`). */
     @Synchronized
-    fun watchVolume(on: Boolean) {
-        volumeWatchers = (volumeWatchers + if (on) 1 else -1).coerceAtLeast(0)
-        manager.watch(if (volumeWatchers > 0) setOf(MEDIA, VOLUME) else setOf(MEDIA))
+    fun watch(topic: String, on: Boolean) {
+        watchers[topic] = ((watchers[topic] ?: 0) + if (on) 1 else -1).coerceAtLeast(0)
+        manager.watch(watchedTopics(watchers))
     }
 
     /** Une commande de la télécommande ; sans session, elle provoque un essai et se perd. */
@@ -218,3 +219,6 @@ object Link {
 
     private fun appVersion(): String = app.packageManager.getPackageInfo(app.packageName, 0).versionName.orEmpty()
 }
+
+/** Ce que l'appli demande au PC : la lecture toujours (carte, commandes du volet), et chaque sujet qu'un écran regarde. */
+internal fun watchedTopics(watchers: Map<String, Int>): Set<String> = setOf("media") + watchers.filterValues { it > 0 }.keys

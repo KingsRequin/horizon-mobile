@@ -1,7 +1,10 @@
 package fr.kingsrequin.horizon.link
 
+import fr.kingsrequin.horizon.protocol.AppInfo
 import fr.kingsrequin.horizon.protocol.FromPc
+import fr.kingsrequin.horizon.protocol.HeadsetInfo
 import fr.kingsrequin.horizon.protocol.MediaInfo
+import fr.kingsrequin.horizon.protocol.OutputInfo
 import fr.kingsrequin.horizon.protocol.SessionInfo
 import kotlin.io.encoding.Base64
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,13 +36,31 @@ fun MediaNow.positionAt(nowMs: Long): Long {
     return if (durationMs > 0) position.coerceAtMost(durationMs) else position
 }
 
-/** Ce que montre la télécommande. `art` : JPEG de la pochette de [media], s'il est arrivé. */
+/** Le mixeur du PC tel que reçu. */
+data class MixerNow(val outputs: List<OutputInfo>, val defaultOutput: String?, val apps: List<AppInfo>)
+
+/** Minuteur du PC ; `receivedAtMs` : horloge du téléphone à la réception. */
+data class TimerNow(val remainingMs: Long, val totalMs: Long, val paused: Boolean, val receivedAtMs: Long)
+
+/** Temps restant à `nowMs` : décompté depuis la réception, figé en pause, jamais sous zéro. */
+fun TimerNow.remainingAt(nowMs: Long): Long =
+    if (paused) remainingMs else (remainingMs - (nowMs - receivedAtMs).coerceAtLeast(0)).coerceAtLeast(0)
+
+/** Les actions rapides du PC telles que reçues. */
+data class ActionsNow(val dnd: Boolean, val timer: TimerNow?, val presets: List<Int>, val headset: HeadsetInfo?)
+
+/**
+ * Ce que montrent la télécommande et l'accueil. `art` : JPEG de la pochette de [media], s'il est
+ * arrivé ; `mixer` et `actions` : nuls tant que le PC ne les a pas envoyés (écran fermé, PC 0.9).
+ */
 data class RemoteView(
     val media: MediaNow? = null,
     val sessions: List<SessionInfo> = emptyList(),
     val art: ByteArray? = null,
     val volume: Float? = null,
     val muted: Boolean = false,
+    val mixer: MixerNow? = null,
+    val actions: ActionsNow? = null,
 )
 
 /**
@@ -55,6 +76,9 @@ class Remote(private val clock: () -> Long) {
 
     /** Heure du dernier geste sur le volume : le volume d'un écho du PC reçu juste après est ignoré. */
     private var gestureAtMs: Long? = null
+
+    /** Même chose pour la jauge de chaque appli du mixeur (par clé). */
+    private val appGestures = mutableMapOf<String, Long>()
 
     @Synchronized
     fun apply(msg: FromPc) {
@@ -79,8 +103,28 @@ class Remote(private val clock: () -> Long) {
                 val echo = gesture != null && clock() - gesture < ECHO_MS
                 current.value = current.value.copy(volume = if (echo) current.value.volume else msg.volume, muted = msg.muted)
             }
+            is FromPc.MixerState -> {
+                val time = clock()
+                appGestures.values.removeAll { time - it >= ECHO_MS }
+                val shown = current.value.mixer?.apps.orEmpty().associateBy { it.key }
+                // Une jauge que l'utilisateur vient de régler garde sa valeur ; le muet, lui, passe.
+                val apps = msg.apps.map { app -> shown[app.key]?.takeIf { app.key in appGestures }?.let { app.copy(volume = it.volume) } ?: app }
+                current.value = current.value.copy(mixer = MixerNow(msg.outputs, msg.defaultOutput, apps))
+            }
+            is FromPc.ActionsState -> {
+                val timer = msg.timer?.let { TimerNow(it.remainingMs, it.totalMs, it.paused, clock()) }
+                current.value = current.value.copy(actions = ActionsNow(msg.dnd, timer, msg.timerPresets, msg.headset))
+            }
             else -> Unit
         }
+    }
+
+    /** L'utilisateur vient de régler la jauge de l'appli `key` : affichée tout de suite, elle fait foi un instant. */
+    @Synchronized
+    fun localAppVolume(key: String, volume: Float) {
+        val mixer = current.value.mixer ?: return
+        appGestures[key] = clock()
+        current.value = current.value.copy(mixer = mixer.copy(apps = mixer.apps.map { if (it.key == key) it.copy(volume = volume) else it }))
     }
 
     /** L'utilisateur vient de régler le volume : affiché tout de suite, et il fait foi un instant. */
@@ -95,6 +139,7 @@ class Remote(private val clock: () -> Long) {
     fun reset() {
         art = null
         gestureAtMs = null
+        appGestures.clear()
         current.value = RemoteView()
     }
 

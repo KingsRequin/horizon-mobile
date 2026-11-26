@@ -39,6 +39,22 @@ data class MediaInfo(
 @Serializable
 data class SessionInfo(val appId: String, val name: String)
 
+/** Une sortie audio du PC ; `kind` : `headset` ou `speaker` (l'icône). */
+@Serializable
+data class OutputInfo(val id: String, val name: String, val kind: String)
+
+/** Une appli du mixeur du PC ; `key` (clé d'exe) est ce que les commandes reprennent. */
+@Serializable
+data class AppInfo(val key: String, val name: String, val volume: Float, val muted: Boolean, val active: Boolean)
+
+/** Minuteur du PC : `remainingMs` au moment de l'envoi, à décompter depuis la réception. */
+@Serializable
+data class TimerInfo(val remainingMs: Long, val totalMs: Long, val paused: Boolean)
+
+/** Casque du PC. */
+@Serializable
+data class HeadsetInfo(val name: String, val level: Int, val charging: Boolean)
+
 /** Ce que le téléphone envoie. Le nom de série est le champ `type` du message. */
 @Serializable
 sealed interface ToPc {
@@ -80,6 +96,40 @@ sealed interface ToPc {
     @Serializable
     @SerialName("volume.mute")
     data class VolumeMute(val muted: Boolean) : ToPc
+
+    @Serializable
+    @SerialName("mixer.app_volume")
+    data class MixerAppVolume(val key: String, val volume: Float) : ToPc
+
+    @Serializable
+    @SerialName("mixer.app_mute")
+    data class MixerAppMute(val key: String, val muted: Boolean) : ToPc
+
+    /** Sortie audio par défaut du PC. */
+    @Serializable
+    @SerialName("mixer.output")
+    data class MixerOutput(val id: String) : ToPc
+
+    /** Verrouiller le PC. */
+    @Serializable
+    @SerialName("action.lock")
+    data object ActionLock : ToPc
+
+    @Serializable
+    @SerialName("action.dnd")
+    data class ActionDnd(val on: Boolean) : ToPc
+
+    @Serializable
+    @SerialName("timer.start")
+    data class TimerStart(val minutes: Int) : ToPc
+
+    @Serializable
+    @SerialName("timer.pause")
+    data class TimerPause(val paused: Boolean) : ToPc
+
+    @Serializable
+    @SerialName("timer.stop")
+    data object TimerStop : ToPc
 }
 
 /** Ce que le PC envoie. */
@@ -128,6 +178,16 @@ sealed interface FromPc {
     @Serializable
     @SerialName("volume.state")
     data class VolumeState(val volume: Float, val muted: Boolean) : FromPc
+
+    /** Sorties, sortie par défaut et volume de chaque appli (celles qui émettent d'abord). */
+    @Serializable
+    @SerialName("mixer.state")
+    data class MixerState(val outputs: List<OutputInfo>, val defaultOutput: String?, val apps: List<AppInfo>) : FromPc
+
+    /** Ne pas déranger, minuteur (`null` : arrêté), durées proposées, casque du PC. */
+    @Serializable
+    @SerialName("actions.state")
+    data class ActionsState(val dnd: Boolean, val timer: TimerInfo?, val timerPresets: List<Int>, val headset: HeadsetInfo?) : FromPc
 
     /** Un message d'un type que cette version ne connaît pas : ignoré, la session continue. */
     @Serializable

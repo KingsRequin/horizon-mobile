@@ -1,0 +1,1 @@
+{"type":"mixer.state","outputs":[{"id":"out-1","name":"Casque","kind":"headset"},{"id":"out-2","name":"Enceintes","kind":"speaker"}],"defaultOutput":"out-1","apps":[{"key":"spotify.exe","name":"Spotify","volume":0.8,"muted":false,"active":true},{"key":"discord.exe","name":"Discord","volume":0.55,"muted":true,"active":false}]}
