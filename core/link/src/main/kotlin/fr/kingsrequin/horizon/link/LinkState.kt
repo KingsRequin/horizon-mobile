@@ -31,8 +31,11 @@ sealed interface LinkState {
     /** Une série d'essais est en cours : « Reconnexion… ». */
     data class Connecting(val pcName: String) : LinkState
 
-    /** `seed` : couleur d'accent de la barre du PC (ARGB) ; `features` : ce que ce PC sait recevoir. */
-    data class Connected(val pcName: String, val seed: Int, val features: Set<String>) : LinkState
+    /**
+     * `seed` : couleur d'accent de la barre du PC (ARGB) ; `features` : ce que ce PC sait faire ;
+     * `granted` : ce que ce téléphone a le droit de lui demander (`battery`, `media`…).
+     */
+    data class Connected(val pcName: String, val seed: Int, val features: Set<String>, val granted: Set<String>) : LinkState
 
     /** Plus d'essai en cours ; le prochain viendra d'un événement (réseau, appli ouverte, batterie à envoyer). */
     data class Offline(val pcName: String, val reason: OfflineReason, val sinceMs: Long) : LinkState

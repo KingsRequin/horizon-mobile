@@ -125,11 +125,11 @@ private fun HomePreview(state: LinkState, seed: Int = 0xFFF97316.toInt(), advice
 
 @Preview(name = "Connecté, orange", widthDp = 360, heightDp = 560)
 @Composable
-private fun HomeConnected() = HomePreview(LinkState.Connected("Bureau", 0, setOf("battery")))
+private fun HomeConnected() = HomePreview(LinkState.Connected("Bureau", 0, setOf("battery"), setOf("battery")))
 
 @Preview(name = "Connecté, violet, conseil", widthDp = 360, heightDp = 560)
 @Composable
-private fun HomeViolet() = HomePreview(LinkState.Connected("Bureau", 0, setOf("battery")), seed = 0xFFA06CD5.toInt(), advice = Advice.AllowBackground)
+private fun HomeViolet() = HomePreview(LinkState.Connected("Bureau", 0, setOf("battery"), setOf("battery")), seed = 0xFFA06CD5.toInt(), advice = Advice.AllowBackground)
 
 @Preview(name = "Reconnexion, cyan", widthDp = 360, heightDp = 560)
 @Composable

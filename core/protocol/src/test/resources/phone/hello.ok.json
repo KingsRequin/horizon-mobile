@@ -1,1 +1,1 @@
-{"type":"hello.ok","pcId":"pc-1","pcName":"Bureau","protocol":1,"features":["battery"],"accent":"#f97316"}
+{"type":"hello.ok","pcId":"pc-1","pcName":"Bureau","protocol":1,"features":["battery","media"],"granted":["battery","media","sound"],"accent":"#f97316"}

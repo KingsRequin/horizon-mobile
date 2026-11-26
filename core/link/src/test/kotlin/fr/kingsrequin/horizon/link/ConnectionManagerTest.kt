@@ -67,7 +67,7 @@ private class FakeTransport(
             when (msg) {
                 is ToPc.Hello -> listener.onMessage(reply ?: FromPc.HelloOk("pc-1", "Bureau", 1, listOf("battery"), accent))
                 is ToPc.PairRequest -> listener.onMessage(pairReply ?: FromPc.PairAccepted("jeton-neuf", "pc-1", "Bureau"))
-                is ToPc.PhoneBattery -> Unit
+                else -> Unit
             }
             return true
         }
@@ -237,11 +237,54 @@ class ConnectionManagerTest {
         val t = FakeTransport(reachable = setOf(PC), accent = "#a06cd5")
         val m = manager(paired(), t)
         m.onNetwork(true); runCurrent()
-        assertEquals(LinkState.Connected("Bureau", 0xFFA06CD5.toInt(), setOf("battery")), m.state.value)
+        assertEquals(LinkState.Connected("Bureau", 0xFFA06CD5.toInt(), setOf("battery"), granted = setOf("battery")), m.state.value)
         t.push(FromPc.Accent("#22b8cf")); runCurrent()
         assertEquals(0xFF22B8CF.toInt(), (m.state.value as LinkState.Connected).seed)
         t.push(FromPc.Accent("n'importe quoi")); t.push(FromPc.Unknown); runCurrent()
         assertEquals("couleur illisible : on garde la précédente", 0xFF22B8CF.toInt(), (m.state.value as LinkState.Connected).seed)
+    }
+
+    @Test
+    fun theWatchIsSentOnEverySessionAndOnChange() = runTest {
+        val t = FakeTransport(reachable = setOf(PC))
+        val m = manager(paired(), t)
+        m.onNetwork(true); runCurrent()
+        assertTrue("rien à regarder : rien d'envoyé", t.sent.none { it is ToPc.Watch })
+        m.watch(setOf("volume", "media")); runCurrent()
+        assertEquals(ToPc.Watch(listOf("media", "volume")), t.sent.last())
+        m.watch(setOf("media", "volume")); runCurrent()
+        assertEquals("même abonnement : rien de neuf", 1, t.sent.count { it is ToPc.Watch })
+        t.drop(); runCurrent()
+        assertEquals("redemandé à la session suivante", ToPc.Watch(listOf("media", "volume")), t.sent.last())
+        assertEquals(2, t.sent.count { it is ToPc.Watch })
+        m.watch(emptySet()); runCurrent()
+        assertEquals("plus rien : le PC le sait", ToPc.Watch(emptyList()), t.sent.last())
+    }
+
+    @Test
+    fun rightsUpdateTheConnectedState() = runTest {
+        val t = FakeTransport(reachable = setOf(PC), reply = FromPc.HelloOk("pc-1", "Bureau", 1, listOf("battery", "media"), "#f97316", listOf("battery", "media", "sound")))
+        val m = manager(paired(), t)
+        m.onNetwork(true); runCurrent()
+        assertEquals(setOf("battery", "media", "sound"), (m.state.value as LinkState.Connected).granted)
+        t.push(FromPc.Rights(listOf("battery", "sound"))); runCurrent()
+        assertEquals(setOf("battery", "sound"), (m.state.value as LinkState.Connected).granted)
+        // Un PC 0.8 ne dit pas les droits : tout ce qu'il sait faire est permis.
+        val old = manager(paired(), FakeTransport(reachable = setOf(PC)))
+        old.onNetwork(true); runCurrent()
+        assertEquals(setOf("battery"), (old.state.value as LinkState.Connected).granted)
+    }
+
+    @Test
+    fun messagesAfterHelloReachTheListener() = runTest {
+        val t = FakeTransport(reachable = setOf(PC))
+        val m = manager(paired(), t)
+        val heard = mutableListOf<FromPc>()
+        m.onPcMessage = { heard += it }
+        m.onNetwork(true); runCurrent()
+        val state = FromPc.MediaState(null, emptyList())
+        t.push(state); t.push(FromPc.Accent("#22b8cf")); t.push(FromPc.VolumeState(0.5f, false)); t.push(FromPc.Rights(listOf("battery"))); t.push(FromPc.Unknown); runCurrent()
+        assertEquals("ni l'accent, ni les droits, ni l'inconnu : la liaison s'en charge", listOf(state, FromPc.VolumeState(0.5f, false)), heard)
     }
 
     @Test

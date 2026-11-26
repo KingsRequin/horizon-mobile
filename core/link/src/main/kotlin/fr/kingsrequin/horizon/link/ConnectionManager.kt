@@ -49,6 +49,17 @@ class ConnectionManager(
     @Volatile
     var onConnected: (() -> Unit)? = null
 
+    /**
+     * Messages du PC pendant une session (fil de la liaison) : lecture, pochette, volume. L'accent
+     * et les droits n'y passent pas : ils changent [state].
+     */
+    @Volatile
+    var onPcMessage: ((FromPc) -> Unit)? = null
+
+    /** Ce que l'appli regarde ([watch]) : redemandé à chaque session. */
+    private var watched: Set<String> = emptySet()
+    private val watchLock = Any()
+
     private sealed interface Event {
         data class Network(val available: Boolean) : Event
         data object AppOpened : Event
@@ -159,6 +170,19 @@ class ConnectionManager(
         if (live?.send(msg) == true) return true
         events.trySend(Event.Kick)
         return false
+    }
+
+    /**
+     * Ce que l'appli regarde (`media`, `volume`) : le PC n'envoie que cela, et seulement pendant
+     * que l'appli le regarde. Envoyé tout de suite si la session est ouverte, et à chaque session.
+     * Ne provoque aucun essai de connexion.
+     */
+    fun watch(topics: Set<String>) {
+        synchronized(watchLock) {
+            if (topics == watched) return
+            watched = topics
+            live?.send(ToPc.Watch(topics.sorted()))
+        }
     }
 
     /** Appaire avec le PC du QR. Remplace l'appairage précédent en cas de succès seulement. */
@@ -272,10 +296,18 @@ class ConnectionManager(
     private suspend fun message(a: Attempt, msg: FromPc) {
         val pair = a.pair
         when {
-            a.connected -> if (msg is FromPc.Accent) {
-                val state = current.value
-                val seed = parseColor(msg.color)
-                if (state is LinkState.Connected && seed != null) current.value = state.copy(seed = seed)
+            a.connected -> when (msg) {
+                is FromPc.Accent -> {
+                    val state = current.value
+                    val seed = parseColor(msg.color)
+                    if (state is LinkState.Connected && seed != null) current.value = state.copy(seed = seed)
+                }
+                is FromPc.Rights -> {
+                    val state = current.value
+                    if (state is LinkState.Connected) current.value = state.copy(granted = msg.granted.toSet())
+                }
+                FromPc.Unknown -> Unit
+                else -> onPcMessage?.invoke(msg)
             }
             pair != null && msg is FromPc.PairAccepted -> {
                 val link = pair.link
@@ -331,8 +363,12 @@ class ConnectionManager(
             pairing = p.copy(lastHost = a.host, pcName = name).also { store.save(it) }
         }
         live = a.session
-        current.value = LinkState.Connected(name, parseColor(ok.accent) ?: DEFAULT_ACCENT, ok.features.toSet())
+        // Un PC 0.8 ne dit pas les droits : tout ce qu'il sait faire est permis.
+        current.value = LinkState.Connected(name, parseColor(ok.accent) ?: DEFAULT_ACCENT, ok.features.toSet(), (ok.granted ?: ok.features).toSet())
         log.add(clock(), "connecté (${a.rank})")
+        synchronized(watchLock) {
+            if (watched.isNotEmpty()) a.session?.send(ToPc.Watch(watched.sorted()))
+        }
         onConnected?.invoke()
     }
 

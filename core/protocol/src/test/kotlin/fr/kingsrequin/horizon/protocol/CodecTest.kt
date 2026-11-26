@@ -19,7 +19,7 @@ class CodecTest {
 
     @Test
     fun everyExampleFromThePcDecodes() {
-        assertEquals(FromPc.HelloOk("pc-1", "Bureau", 1, listOf("battery"), "#f97316"), Codec.decode(example("hello.ok.json")))
+        assertEquals(FromPc.HelloOk("pc-1", "Bureau", 1, listOf("battery", "media"), "#f97316", listOf("battery", "media", "sound")), Codec.decode(example("hello.ok.json")))
         assertTrue(Codec.decode(example("pair.accepted.json")) is FromPc.PairAccepted)
         assertEquals(FromPc.PairRejected("expired"), Codec.decode(example("pair.rejected.json")))
         assertEquals(FromPc.HelloRejected("unknown_device"), Codec.decode(example("hello.rejected.json")))
@@ -27,6 +27,32 @@ class CodecTest {
         assertEquals(FromPc.Unknown, Codec.decode(example("inconnu.json")))
         assertNull(Codec.decode("pas du json"))
         assertNull(Codec.decode("""{"x":1}"""))
+    }
+
+    @Test
+    fun everyNewExampleDecodes() {
+        val spotify = MediaInfo("Spotify.exe", "Spotify", "FROGZ", "SPLATA", true, 68_000, 233_000, "9f2c1e0a7b3d4c55")
+        val sessions = listOf(SessionInfo("Spotify.exe", "Spotify"), SessionInfo("Chrome", "Google Chrome"))
+        assertEquals(FromPc.MediaState(spotify, sessions), Codec.decode(example("media.state.json")))
+        assertEquals(FromPc.MediaState(null, emptyList()), Codec.decode(example("media.state-vide.json")))
+        assertEquals(FromPc.MediaArt("9f2c1e0a7b3d4c55", "/9j/4AAQSkZJRgABAQAAAQABAAD/2w=="), Codec.decode(example("media.art.json")))
+        assertEquals(FromPc.VolumeState(0.5f, false), Codec.decode(example("volume.state.json")))
+        assertEquals(FromPc.Rights(listOf("battery", "sound")), Codec.decode(example("rights.json")))
+    }
+
+    @Test
+    fun anOldPcHelloHasNoGrantedList() {
+        assertEquals(FromPc.HelloOk("pc-1", "Bureau", 1, listOf("battery"), "#f97316", granted = null), Codec.decode(example("hello.ok-sans-droits.json")))
+    }
+
+    @Test
+    fun theRemoteCommandsMatchTheExamples() {
+        assertEquals(json(example("watch.json")), json(Codec.encode(ToPc.Watch(listOf("media", "volume")))))
+        assertEquals(json(example("media.command.json")), json(Codec.encode(ToPc.MediaCommand("play_pause"))))
+        assertEquals(json(example("media.seek.json")), json(Codec.encode(ToPc.MediaSeek(68_000))))
+        assertEquals(json(example("media.select.json")), json(Codec.encode(ToPc.MediaSelect("Spotify.exe"))))
+        assertEquals(json(example("volume.set.json")), json(Codec.encode(ToPc.VolumeSet(0.72f))))
+        assertEquals(json(example("volume.mute.json")), json(Codec.encode(ToPc.VolumeMute(true))))
     }
 
     @Test
