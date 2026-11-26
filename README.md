@@ -1,9 +1,10 @@
 # Horizon Mobile
 
 L'appli Android compagnon d'[Horizon](https://github.com/KingsRequin/horizon), la barre d'outils
-pour Windows. Elle s'appaire au PC par un QR code et lui envoie la batterie du téléphone, qui
-s'affiche sur la barre. Tout se passe sur le réseau local : rien ne passe par Internet, aucun
-compte, aucune publicité, aucune mesure d'audience.
+pour Windows. Elle s'appaire au PC par un QR code, lui envoie la batterie du téléphone, qui
+s'affiche sur la barre, et sert de télécommande au PC : lecture, morceau, position, volume, avec
+la pochette, depuis l'appli, le volet ou l'écran verrouillé. Tout se passe sur le réseau local :
+rien ne passe par Internet, aucun compte, aucune publicité, aucune mesure d'audience.
 
 Android 7.0 et plus. Un seul APK, le même pour tous les téléphones.
 
@@ -24,10 +25,21 @@ Le téléphone et le PC doivent être sur le même réseau. L'appli s'installe a
 
 - Elle envoie la batterie du téléphone (pourcentage, en charge ou non) quand elle change, jamais
   à heure fixe. Elle n'affiche pas ce pourcentage : la barre d'Horizon est là pour ça.
+- Télécommande (Horizon 0.9 et plus) : l'onglet *Télécommande* montre ce que joue le PC
+  (pochette, titre, artiste, position) et le pilote : lecture et pause, morceau précédent ou
+  suivant, position, choix du lecteur quand il y en a plusieurs, volume général et muet. Sur cet
+  écran, les touches de volume du téléphone règlent le PC ; ailleurs, celui du téléphone. Une
+  carte de lecture reprend l'essentiel sur l'accueil.
+- Pendant que le PC joue, ses commandes apparaissent dans le volet, sur l'écran verrouillé et
+  sur un casque Bluetooth (*Réglages › Commandes du PC dans le volet* pour les retirer).
+- Chaque téléphone a ses droits dans Horizon (*Réglages › Téléphone*, case *Télécommande* sous
+  son nom) ; sans le droit, l'onglet dit où l'accorder.
 - Elle ne parle qu'au PC appairé : la connexion est chiffrée et n'est acceptée que si le PC
   présente la clé lue dans le QR code. Elle ne joint que des adresses du réseau local.
 - Elle ne se réveille pas d'elle-même : elle réagit au retour du Wi-Fi, à un changement de
-  batterie et à son ouverture. Loin du PC, elle attend.
+  batterie et à son ouverture. Loin du PC, elle attend. Le PC ne lui envoie que les changements
+  de la lecture (et une pochette par morceau), le volume seulement pendant que l'écran
+  Télécommande est ouvert.
 - Elle regarde une fois par jour, à l'ouverture, si une version plus récente existe sur GitHub,
   et propose de la télécharger. Elle n'installe rien seule.
 
@@ -68,10 +80,12 @@ son module, `android preview render --fqn=<aperçu> --output=build/apercus`.
 
 ```
 core/protocol     Kotlin pur : messages échangés avec Horizon, lecture du QR d'appairage
-core/link         Kotlin pur : session TLS épinglée sur la clé du PC, reprise de la liaison
+core/link         Kotlin pur : session TLS épinglée sur la clé du PC, reprise de la liaison,
+                  état de la télécommande (Remote)
 core/design       la charte : palette tirée d'une couleur, typographie, formes, composants
-core/connection   ce que la liaison demande à Android : coffre de clés, service, réseau
-app               les écrans : appairage, accueil, réglages
+core/connection   ce que la liaison demande à Android : coffre de clés, service, réseau,
+                  session multimédia du PC (Media3) pour le volet et l'écran verrouillé
+app               les écrans : appairage, accueil, télécommande, réglages
 tools             vérification, polices (polices.ps1), icônes (icones.ps1), exemples du protocole
 docs              le protocole (copie de docs/PHONE.md du dépôt d'Horizon)
 ```

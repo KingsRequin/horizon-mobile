@@ -65,6 +65,12 @@ connexion est fermée. Après `pair.accepted` ou `hello.ok`, la session est ouve
 | `pair.request` | `token`, `deviceId` (UUID créé par l'appli à son installation), `deviceName`, `appVersion` |
 | `hello` | `deviceId`, `deviceToken`, `protocol` (1), `appVersion` |
 | `phone.battery` | `devices` : liste de `{ id, kind, name, percent, charging, atMs }` |
+| `watch` | `topics` : ce que le téléphone veut recevoir, `media` et `volume` (remplace la liste précédente) |
+| `media.command` | `action` : `play_pause`, `next`, `previous` |
+| `media.seek` | `positionMs` : aller à cette position du morceau en cours |
+| `media.select` | `appId` : suivre cette lecture plutôt que celle choisie par Windows |
+| `volume.set` | `volume` : volume général, de 0 à 1 |
+| `volume.mute` | `muted` |
 
 `kind` vaut `phone`, `watch`, `earbuds` ou autre chose (traité comme « autre »). `percent` va
 de 0 à 100. `atMs` est l'heure de la mesure (millisecondes Unix, horloge du téléphone) ; une
@@ -72,23 +78,44 @@ heure à plus de 5 minutes dans le futur est remplacée par l'heure de réceptio
 remplace le précédent du même téléphone : il porte tous ses appareils, 8 au plus. Le téléphone
 envoie à l'ouverture de la session, puis quand un pourcentage ou un état de charge change.
 
+`watch` se renvoie à chaque session ouverte : sans lui, le PC n'envoie ni média ni volume. Le
+téléphone regarde `media` tant que la liaison est ouverte (commandes du volet et de l'écran
+verrouillé), `volume` seulement pendant que l'écran Télécommande est ouvert. Un sujet inconnu,
+ou que le téléphone n'a pas le droit de voir, est ignoré. Une commande sans le droit `media`,
+une action inconnue ou un volume illisible sont ignorés ; le volume est ramené entre 0 et 1.
+
 ### Du PC vers le téléphone
 
 | `type` | Champs |
 | --- | --- |
 | `pair.accepted` | `deviceToken`, `pcId`, `pcName` |
 | `pair.rejected` | `reason` : `expired`, `used`, `unknown` |
-| `hello.ok` | `pcId`, `pcName`, `protocol` (1), `features` (liste de chaînes), `accent` (`#rrggbb`) |
+| `hello.ok` | `pcId`, `pcName`, `protocol` (1), `features` (liste de chaînes), `granted` (liste de chaînes), `accent` (`#rrggbb`) |
 | `hello.rejected` | `reason` : `unknown_device`, `bad_token`, `protocol` |
 | `accent` | `color` (`#rrggbb`) : la couleur d'accent de la barre a changé |
+| `rights` | `granted` : les droits de ce téléphone ont changé pendant la session |
+| `media.state` | `media` : `{ appId, appName, title, artist, playing, positionMs, durationMs, artKey }` ou `null` (rien ne joue) ; `sessions` : liste de `{ appId, name }` |
+| `media.art` | `artKey`, `jpeg` : pochette du morceau, JPEG carré de 300 px au plus et 48 Kio au plus, en base64 |
+| `volume.state` | `volume` (de 0 à 1), `muted` |
 
 Après `unknown_device` ou `bad_token`, le téléphone ne réessaie pas : il propose un nouvel
 appairage. `accent` est la couleur dont l'appli tire toute sa palette (pochette pendant la
 lecture, sinon fond d'écran, sinon l'orange `#f97316`).
 
+Le PC n'envoie que des changements : `media.state` à chaque morceau, lecture ou pause, durée,
+lecteur, ou quand la position s'écarte de plus de 1,5 s de celle attendue ; `media.art` une fois
+par morceau (`artKey` change avec le morceau), puis à chaque nouvel abonnement ; `volume.state`
+quand le volume ou le muet change. `positionMs` vaut au moment de l'envoi : le téléphone la
+fait avancer lui-même depuis la réception, jamais d'après une heure du PC (les horloges des deux
+appareils diffèrent). `durationMs` vaut 0 pour une radio ou un direct.
+
 ## Compatibilité
 
-- `features` dit ce que ce PC sait faire. En version 1 : `battery`. L'appli ne montre que ce
-  que le PC annonce ; le PC ignore ce qu'il n'a pas annoncé.
+- `features` dit ce que ce PC sait faire : `battery` (Horizon 0.8), `media` (0.9). L'appli ne
+  montre que ce que le PC annonce ; le PC ignore ce qu'il n'a pas annoncé.
+- `granted` dit ce que ce téléphone a le droit de faire : `battery`, `media`, `sound`, `input`.
+  Par défaut : `battery`, `media`, `sound` ; `input` ne s'accorde que dans Horizon. Absent
+  (Horizon 0.8) : les droits sont les `features`. Une fonction annoncée mais non accordée est
+  montrée par l'appli avec l'explication « à autoriser dans Horizon › Téléphone ».
 - Un type de message inconnu est ignoré, un champ inconnu aussi. Ajouter un champ ou un type ne
   change donc pas la version du protocole ; changer le sens d'un champ existant, si.

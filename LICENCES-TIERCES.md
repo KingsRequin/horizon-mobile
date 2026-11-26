@@ -14,11 +14,12 @@ distribuées sous la même licence.
 
 ## Phosphor Icons
 
-Icônes de l'appli (poids Regular), converties en dessins vectoriels par `tools/icones.ps1` à
+Icônes de l'appli (poids Regular, et Fill pour les commandes du lecteur), converties en dessins vectoriels par `tools/icones.ps1` à
 partir du dépôt [phosphor-icons/core](https://github.com/phosphor-icons/core).
 
 Copyright (c) 2023 Phosphor Icons. Licence : MIT.
 
 ## Bibliothèques
 
-Jetpack Compose, AndroidX et kotlinx.serialization : Apache License 2.0.
+Jetpack Compose, AndroidX (dont CameraX et Media3), kotlinx.serialization, kotlinx.coroutines,
+OkHttp, Guava et ZXing : Apache License 2.0.
