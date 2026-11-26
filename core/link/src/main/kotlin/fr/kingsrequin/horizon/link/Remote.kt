@@ -53,7 +53,7 @@ class Remote(private val clock: () -> Long) {
     /** Dernière pochette reçue et sa clé : montrée seulement avec la lecture qui porte cette clé. */
     private var art: Pair<String, ByteArray>? = null
 
-    /** Heure du dernier geste sur le volume : un écho du PC reçu juste après est ignoré. */
+    /** Heure du dernier geste sur le volume : le volume d'un écho du PC reçu juste après est ignoré. */
     private var gestureAtMs: Long? = null
 
     @Synchronized
@@ -74,9 +74,10 @@ class Remote(private val clock: () -> Long) {
                 current.value = current.value.copy(art = artFor(current.value.media))
             }
             is FromPc.VolumeState -> {
+                // Pendant le geste, seul le volume reste celui du doigt : le muet, lui, passe.
                 val gesture = gestureAtMs
-                if (gesture != null && clock() - gesture < ECHO_MS) return
-                current.value = current.value.copy(volume = msg.volume, muted = msg.muted)
+                val echo = gesture != null && clock() - gesture < ECHO_MS
+                current.value = current.value.copy(volume = if (echo) current.value.volume else msg.volume, muted = msg.muted)
             }
             else -> Unit
         }

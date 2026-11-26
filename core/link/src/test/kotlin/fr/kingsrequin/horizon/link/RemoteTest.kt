@@ -80,6 +80,16 @@ class RemoteTest {
     }
 
     @Test
+    fun aMuteDuringTheEchoWindowIsKept() {
+        remote.apply(FromPc.VolumeState(0.5f, false))
+        remote.localVolume(0.8f)
+        now += 300
+        remote.apply(FromPc.VolumeState(0.6f, true))
+        assertEquals("le volume du geste tient", 0.8f, remote.view.value.volume)
+        assertEquals("le muet, lui, passe", true, remote.view.value.muted)
+    }
+
+    @Test
     fun aNewSessionStartsFromNothing() {
         remote.apply(state(song()))
         remote.apply(FromPc.MediaArt("cle-a", cover64))

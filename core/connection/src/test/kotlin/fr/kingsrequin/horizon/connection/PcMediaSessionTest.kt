@@ -3,6 +3,7 @@ package fr.kingsrequin.horizon.connection
 import androidx.media3.common.Player
 import fr.kingsrequin.horizon.link.MediaNow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -20,5 +21,15 @@ class PcMediaSessionTest {
             assertTrue("commande $command", command in withSeek)
         }
         assertEquals("un direct ne se déplace pas", withSeek - Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM, sessionCommands(song(duration = 0), media))
+    }
+
+    @Test
+    fun aPlayRequestOnlyTogglesWhatDiffers() {
+        // Le PC ne connaît que « lecture/pause » : un « lecture » d'un casque pendant que le PC
+        // joue déjà ne doit pas le mettre en pause.
+        assertFalse(playPauseNeeded(requested = true, song()))
+        assertTrue(playPauseNeeded(requested = false, song()))
+        assertTrue(playPauseNeeded(requested = true, song().copy(playing = false)))
+        assertFalse("rien ne joue", playPauseNeeded(requested = true, null))
     }
 }

@@ -81,8 +81,11 @@ envoie à l'ouverture de la session, puis quand un pourcentage ou un état de ch
 `watch` se renvoie à chaque session ouverte : sans lui, le PC n'envoie ni média ni volume. Le
 téléphone regarde `media` tant que la liaison est ouverte (commandes du volet et de l'écran
 verrouillé), `volume` seulement pendant que l'écran Télécommande est ouvert. Un sujet inconnu,
-ou que le téléphone n'a pas le droit de voir, est ignoré. Une commande sans le droit `media`,
-une action inconnue ou un volume illisible sont ignorés ; le volume est ramené entre 0 et 1.
+ou que le téléphone n'a pas le droit de voir, est ignoré ; le PC garde la demande et la
+rétablit quand le droit revient (avec l'état du moment). Une session neuve repart sans
+abonnement. Une commande sans le droit `media`, une action inconnue ou un volume illisible
+sont ignorés ; le volume est ramené entre 0 et 1. Un saut de position est borné au morceau ;
+un direct ne se déplace pas.
 
 ### Du PC vers le téléphone
 
@@ -95,7 +98,7 @@ une action inconnue ou un volume illisible sont ignorés ; le volume est ramené
 | `accent` | `color` (`#rrggbb`) : la couleur d'accent de la barre a changé |
 | `rights` | `granted` : les droits de ce téléphone ont changé pendant la session |
 | `media.state` | `media` : `{ appId, appName, title, artist, playing, positionMs, durationMs, artKey }` ou `null` (rien ne joue) ; `sessions` : liste de `{ appId, name }` |
-| `media.art` | `artKey`, `jpeg` : pochette du morceau, JPEG carré de 300 px au plus et 48 Kio au plus, en base64 |
+| `media.art` | `artKey`, `jpeg` : pochette du morceau, JPEG carré de 300 px au plus et 47 Kio au plus, en base64 (la trame tient dans 64 Kio) |
 | `volume.state` | `volume` (de 0 à 1), `muted` |
 
 Après `unknown_device` ou `bad_token`, le téléphone ne réessaie pas : il propose un nouvel

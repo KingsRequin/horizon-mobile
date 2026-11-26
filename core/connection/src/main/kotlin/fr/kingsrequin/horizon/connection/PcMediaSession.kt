@@ -36,6 +36,13 @@ fun sessionCommands(media: MediaNow?, granted: Set<String>): Set<Int> {
 }
 
 /**
+ * Faut-il envoyer « lecture/pause » au PC pour obtenir `requested` (vrai : lecture) ? Le PC ne
+ * connaît que la bascule : un « lecture » explicite (casque, voiture, assistant) pendant que le PC
+ * joue déjà ne doit pas le mettre en pause. Fonction pure.
+ */
+fun playPauseNeeded(requested: Boolean, media: MediaNow?): Boolean = media != null && media.playing != requested
+
+/**
  * La lecture du PC présentée au système, comme le fait KDE Connect : commandes dans le volet, sur
  * l'écran verrouillé et sur un casque Bluetooth. Le volume reste celui du téléphone (les touches
  * de volume ne règlent le PC que sur l'écran Télécommande, voir [Link.volumeKey]). Sur le fil
@@ -109,7 +116,7 @@ private class PcPlayer(private val send: (ToPc) -> Unit) : SimpleBasePlayer(Loop
     private fun neighbour(uid: String) = MediaItemData.Builder(uid).build()
 
     override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
-        send(ToPc.MediaCommand("play_pause"))
+        if (playPauseNeeded(playWhenReady, shown)) send(ToPc.MediaCommand("play_pause"))
         return Futures.immediateVoidFuture()
     }
 
