@@ -3,7 +3,8 @@
 L'appli Android compagnon d'[Horizon](https://github.com/KingsRequin/horizon), la barre d'outils
 pour Windows. Elle s'appaire au PC par un QR code, lui envoie la batterie du téléphone, qui
 s'affiche sur la barre, et sert de télécommande au PC : lecture, morceau, position, volume, avec
-la pochette, depuis l'appli, le volet ou l'écran verrouillé. Tout se passe sur le réseau local :
+la pochette, depuis l'appli, le volet ou l'écran verrouillé, avec le volume de chaque appli, la
+sortie audio et quelques actions (verrouiller, ne pas déranger, minuteur). Tout se passe sur le réseau local :
 rien ne passe par Internet, aucun compte, aucune publicité, aucune mesure d'audience.
 
 Android 7.0 et plus. Un seul APK, le même pour tous les téléphones.
@@ -30,6 +31,10 @@ Le téléphone et le PC doivent être sur le même réseau. L'appli s'installe a
   suivant, position, choix du lecteur quand il y en a plusieurs, volume général et muet. Sur cet
   écran, les touches de volume du téléphone règlent le PC ; ailleurs, celui du téléphone. Une
   carte de lecture reprend l'essentiel sur l'accueil.
+- Mixeur et actions (Horizon 0.10 et plus) : sur la télécommande, la sortie audio du PC (passer
+  à la suivante ou la choisir) et le volume et le muet de chaque appli ; sur l'accueil,
+  verrouiller le PC, ne pas déranger, le minuteur (durées d'Horizon, pause, arrêt) et la batterie
+  du casque du PC. Droit *Son et actions* dans Horizon.
 - Pendant que le PC joue, ses commandes apparaissent dans le volet, sur l'écran verrouillé et
   sur un casque Bluetooth (*Réglages › Commandes du PC dans le volet* pour les retirer).
 - Chaque téléphone a ses droits dans Horizon (*Réglages › Téléphone*, case *Télécommande* sous
@@ -38,8 +43,8 @@ Le téléphone et le PC doivent être sur le même réseau. L'appli s'installe a
   présente la clé lue dans le QR code. Elle ne joint que des adresses du réseau local.
 - Elle ne se réveille pas d'elle-même : elle réagit au retour du Wi-Fi, à un changement de
   batterie et à son ouverture. Loin du PC, elle attend. Le PC ne lui envoie que les changements
-  de la lecture (et une pochette par morceau), le volume seulement pendant que l'écran
-  Télécommande est ouvert.
+  de la lecture (et une pochette par morceau), le volume et le mixeur seulement pendant que
+  l'écran Télécommande est ouvert, les actions pendant que l'accueil l'est.
 - Elle regarde une fois par jour, à l'ouverture, si une version plus récente existe sur GitHub,
   et propose de la télécharger. Elle n'installe rien seule.
 

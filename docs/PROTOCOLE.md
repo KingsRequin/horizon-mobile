@@ -71,6 +71,14 @@ connexion est fermée. Après `pair.accepted` ou `hello.ok`, la session est ouve
 | `media.select` | `appId` : suivre cette lecture plutôt que celle choisie par Windows |
 | `volume.set` | `volume` : volume général, de 0 à 1 |
 | `volume.mute` | `muted` |
+| `mixer.app_volume` | `key` (clé d'exe reçue dans `mixer.state`), `volume` (de 0 à 1) |
+| `mixer.app_mute` | `key`, `muted` |
+| `mixer.output` | `id` : sortie audio par défaut (identifiant reçu dans `mixer.state`) |
+| `action.lock` | verrouiller la session Windows |
+| `action.dnd` | `on` : ne pas déranger |
+| `timer.start` | `minutes` (de 1 à 600) |
+| `timer.pause` | `paused` |
+| `timer.stop` | arrêter le minuteur |
 
 `kind` vaut `phone`, `watch`, `earbuds` ou autre chose (traité comme « autre »). `percent` va
 de 0 à 100. `atMs` est l'heure de la mesure (millisecondes Unix, horloge du téléphone) ; une
@@ -80,10 +88,12 @@ envoie à l'ouverture de la session, puis quand un pourcentage ou un état de ch
 
 `watch` se renvoie à chaque session ouverte : sans lui, le PC n'envoie ni média ni volume. Le
 téléphone regarde `media` tant que la liaison est ouverte (commandes du volet et de l'écran
-verrouillé), `volume` seulement pendant que l'écran Télécommande est ouvert. Un sujet inconnu,
+verrouillé), `volume` et `mixer` seulement pendant que l'écran Télécommande est ouvert,
+`actions` pendant que l'accueil est ouvert. Un sujet inconnu,
 ou que le téléphone n'a pas le droit de voir, est ignoré ; le PC garde la demande et la
 rétablit quand le droit revient (avec l'état du moment). Une session neuve repart sans
-abonnement. Une commande sans le droit `media`, une action inconnue ou un volume illisible
+abonnement. `media` et `volume` demandent le droit `media` ; `mixer`, `actions` et leurs
+commandes, le droit `sound`. Une commande sans son droit, une action inconnue ou un volume illisible
 sont ignorés ; le volume est ramené entre 0 et 1. Un saut de position est borné au morceau ;
 un direct ne se déplace pas.
 
@@ -100,6 +110,8 @@ un direct ne se déplace pas.
 | `media.state` | `media` : `{ appId, appName, title, artist, playing, positionMs, durationMs, artKey }` ou `null` (rien ne joue) ; `sessions` : liste de `{ appId, name }` |
 | `media.art` | `artKey`, `jpeg` : pochette du morceau, JPEG carré de 300 px au plus et 47 Kio au plus, en base64 (la trame tient dans 64 Kio) |
 | `volume.state` | `volume` (de 0 à 1), `muted` |
+| `mixer.state` | `outputs` : liste de `{ id, name, kind }` (`kind` : `headset` ou `speaker`) ; `defaultOutput` ; `apps` : liste de `{ key, name, volume, muted, active }`, celles qui émettent d'abord, 24 au plus |
+| `actions.state` | `dnd` ; `timer` : `{ remainingMs, totalMs, paused }` ou `null` (arrêté) ; `timerPresets` : durées proposées, en minutes ; `headset` : `{ name, level, charging }` ou `null` (pas de casque) |
 
 Après `unknown_device` ou `bad_token`, le téléphone ne réessaie pas : il propose un nouvel
 appairage. `accent` est la couleur dont l'appli tire toute sa palette (pochette pendant la
@@ -110,11 +122,15 @@ lecteur, ou quand la position s'écarte de plus de 1,5 s de celle attendue ; `me
 par morceau (`artKey` change avec le morceau), puis à chaque nouvel abonnement ; `volume.state`
 quand le volume ou le muet change. `positionMs` vaut au moment de l'envoi : le téléphone la
 fait avancer lui-même depuis la réception, jamais d'après une heure du PC (les horloges des deux
-appareils diffèrent). `durationMs` vaut 0 pour une radio ou un direct.
+appareils diffèrent). `durationMs` vaut 0 pour une radio ou un direct. `mixer.state` et
+`actions.state` sont complets et ne partent que s'ils ont changé ; `remainingMs` vaut au moment
+de l'envoi, le téléphone le décompte depuis la réception (sauf en pause) : un minuteur qui
+tourne ne renvoie rien chaque seconde.
 
 ## Compatibilité
 
-- `features` dit ce que ce PC sait faire : `battery` (Horizon 0.8), `media` (0.9). L'appli ne
+- `features` dit ce que ce PC sait faire : `battery` (Horizon 0.8), `media` (0.9), `mixer` et
+  `actions` (0.10). L'appli ne
   montre que ce que le PC annonce ; le PC ignore ce qu'il n'a pas annoncé.
 - `granted` dit ce que ce téléphone a le droit de faire : `battery`, `media`, `sound`, `input`.
   Par défaut : `battery`, `media`, `sound` ; `input` ne s'accorde que dans Horizon. Absent
