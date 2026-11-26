@@ -16,6 +16,10 @@
         android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
         tools:ignore="BatteryLife" />
 
+    <!-- La mise à jour dans l'appli : ouvrir l'écran d'installation d'Android pour l'APK téléchargé
+         depuis les versions de ce dépôt (Android demande toujours la confirmation). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- Savoir si les services Google sont présents, pour le rapport de diagnostic. -->
     <queries>
         <package android:name="com.google.android.gms" />
@@ -49,6 +53,16 @@
                     android:scheme="horizon" />
             </intent-filter>
         </activity>
+        <!-- L'APK de la mise à jour, prêté à l'installateur d'Android le temps de l'installation. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.maj"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/maj_paths" />
+        </provider>
     </application>
 
 </manifest>

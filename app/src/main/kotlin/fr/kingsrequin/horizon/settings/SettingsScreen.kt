@@ -53,7 +53,16 @@ class SettingsActions(
 
 /** Les réglages : mode de liaison, PC appairé, langue, rapport de diagnostic, à propos. */
 @Composable
-fun SettingsScreen(mode: LinkMode, pcName: String, version: String, update: Update?, actions: SettingsActions, modifier: Modifier = Modifier, systemControls: Boolean = true) {
+fun SettingsScreen(
+    mode: LinkMode,
+    pcName: String,
+    version: String,
+    update: Update?,
+    actions: SettingsActions,
+    modifier: Modifier = Modifier,
+    systemControls: Boolean = true,
+    updateState: UpdateState = UpdateState.Idle,
+) {
     val colors = LocalHorizonColors.current
     // Oublier le PC se confirme dans l'écran, sans boîte de dialogue.
     var forgetting by rememberSaveable { mutableStateOf(false) }
@@ -65,7 +74,7 @@ fun SettingsScreen(mode: LinkMode, pcName: String, version: String, update: Upda
         Text(stringResource(R.string.tab_settings), style = HorizonType.titleLarge, color = colors.onSurface, modifier = Modifier.padding(horizontal = HorizonSpace.s2).semantics { heading() })
         if (update != null) {
             Spacer(Modifier.height(HorizonSpace.s2))
-            Bouton(stringResource(R.string.update_available, update.version), { actions.download(update) })
+            UpdateButton(update, updateState, { actions.download(update) })
         }
         Section(stringResource(R.string.settings_link))
         Groupe {
@@ -124,7 +133,7 @@ private fun Section(title: String) {
 @Preview(name = "Réglages", widthDp = 360, heightDp = 900)
 @Composable
 private fun SettingsPreview() = HorizonTheme {
-    SettingsScreen(LinkMode.Continuous, "Bureau", "0.1.0", Update("0.2.0", "https://exemple.fr"), SettingsActions(language = {}, systemControls = {}))
+    SettingsScreen(LinkMode.Continuous, "Bureau", "0.1.0", Update("0.2.0", "https://exemple.fr", "https://exemple.fr/SHA256SUMS"), SettingsActions(language = {}, systemControls = {}))
 }
 
 @Preview(name = "Réglages, police à 200 %", widthDp = 360, heightDp = 1400, fontScale = 2f)

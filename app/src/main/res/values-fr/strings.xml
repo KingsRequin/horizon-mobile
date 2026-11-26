@@ -93,5 +93,10 @@
     <string name="settings_licences">Licences</string>
     <string name="settings_source">Code source</string>
     <string name="settings_version">Version %1$s</string>
-    <string name="update_available">Version %1$s disponible · Télécharger</string>
+    <string name="update_available">Mettre à jour vers %1$s</string>
+    <string name="update_downloading">Téléchargement…</string>
+    <string name="update_downloading_percent">Téléchargement… %1$d %%</string>
+    <string name="update_failed">Échec du téléchargement · Réessayer</string>
+    <string name="update_permission">Autorise Horizon Mobile à installer des applis, puis reviens ici.</string>
+    <string name="update_title">Horizon Mobile %1$s est disponible</string>
 </resources>

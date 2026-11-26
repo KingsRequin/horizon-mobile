@@ -11,6 +11,21 @@ import org.junit.Test
 
 class SettingsLogicTest {
     @Test
+    fun theExpectedSumIsReadFromTheSumsFile() {
+        val sums = "f9ca70fe87429eaa3b39432d1c93025d864a4cbc486fcacb4970a578f1a1f505 *horizon-mobile-0.1.0.apk\n" +
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef  autre.txt\n"
+        assertEquals("f9ca70fe87429eaa3b39432d1c93025d864a4cbc486fcacb4970a578f1a1f505", expectedSha256(sums, "horizon-mobile-0.1.0.apk"))
+        assertEquals("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", expectedSha256(sums, "autre.txt"))
+        assertNull(expectedSha256(sums, "absent.apk"))
+        assertNull("une somme mal formée ne vaut rien", expectedSha256("zz *a.apk", "a.apk"))
+    }
+
+    @Test
+    fun aDigestIsWrittenInLowerHex() {
+        assertEquals("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", sha256Hex(java.security.MessageDigest.getInstance("SHA-256").digest()))
+    }
+
+    @Test
     fun theReportHelpsWithoutLeakingAnything() {
         val log = listOf("12:01:00 192.168.1.49 : ConnectException : Failed to connect to /192.168.1.49:28680", "12:01:05 BUREAU.local : UnknownHostException", "12:01:06 10.0.0.5 : fermée", "12:01:07 PC injoignable")
         val text = diagnostic(DeviceInfo("Xiaomi", "24129PN74G", 37, gms = true), "0.1.0", LinkMode.Continuous, LinkState.Offline("BUREAU", OfflineReason.Unreachable, 0), "signaled : kill background", log)
@@ -26,9 +41,11 @@ class SettingsLogicTest {
     @Test
     fun onlyAStrictlyNewerReleaseIsOffered() {
         val apk = "https://github.com/KingsRequin/horizon-mobile/releases/download/v0.2.0/horizon-mobile-0.2.0.apk"
-        val json = """{"tag_name":"v0.2.0","assets":[{"name":"SHA256SUMS","browser_download_url":"https://x/sums"},{"name":"horizon-mobile-0.2.0.apk","browser_download_url":"$apk"}]}"""
-        assertEquals(Update("0.2.0", apk), newerVersion("0.1.0", json))
-        assertEquals(Update("0.2.0", apk), newerVersion("0.1.9-dev", json))
+        val sums = "https://github.com/KingsRequin/horizon-mobile/releases/download/v0.2.0/SHA256SUMS"
+        val json = """{"tag_name":"v0.2.0","assets":[{"name":"SHA256SUMS","browser_download_url":"$sums"},{"name":"horizon-mobile-0.2.0.apk","browser_download_url":"$apk"}]}"""
+        assertEquals(Update("0.2.0", apk, sums), newerVersion("0.1.0", json))
+        assertEquals(Update("0.2.0", apk, sums), newerVersion("0.1.9-dev", json))
+        assertNull("sans somme à vérifier, pas de mise à jour", newerVersion("0.1.0", json.replace(sums, "https://x/sums")))
         assertNull("seulement un fichier des versions de ce dépôt", newerVersion("0.1.0", json.replace(apk, "https://exemple.fr/a.apk")))
         assertNull(newerVersion("0.2.0", json))
         assertNull(newerVersion("0.10.0", json))

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Seul le dossier du cache où la mise à jour est téléchargée est prêté à l'installateur. -->
+<paths>
+    <cache-path name="maj" path="maj/" />
+</paths>

@@ -60,6 +60,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     media: (@Composable () -> Unit)? = null,
     actions: (@Composable () -> Unit)? = null,
+    update: (@Composable () -> Unit)? = null,
 ) {
     val colors = LocalHorizonColors.current
     val res = LocalResources.current
@@ -95,6 +96,7 @@ fun HomeScreen(
             advice == Advice.AllowBackground -> Card(stringResource(R.string.advice_background), stringResource(R.string.advice_background_detail), stringResource(R.string.advice_allow)) { onAdvice(advice) }
             advice == Advice.WasKilled -> Card(stringResource(R.string.advice_killed), stringResource(R.string.advice_killed_detail), stringResource(R.string.pairing_open_settings)) { onAdvice(advice) }
         }
+        update?.invoke()
         media?.invoke()
         actions?.invoke()
         Column(verticalArrangement = Arrangement.spacedBy(HorizonSpace.s2)) {

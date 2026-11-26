@@ -45,8 +45,11 @@ Le téléphone et le PC doivent être sur le même réseau. L'appli s'installe a
   batterie et à son ouverture. Loin du PC, elle attend. Le PC ne lui envoie que les changements
   de la lecture (et une pochette par morceau), le volume et le mixeur seulement pendant que
   l'écran Télécommande est ouvert, les actions pendant que l'accueil l'est.
-- Elle regarde une fois par jour, à l'ouverture, si une version plus récente existe sur GitHub,
-  et propose de la télécharger. Elle n'installe rien seule.
+- Elle regarde, à l'ouverture et au plus toutes les 6 heures, si une version plus récente existe
+  sur GitHub. Si oui, l'accueil et les réglages proposent « Mettre à jour » : l'appli télécharge
+  l'APK, vérifie sa somme SHA-256 contre le `SHA256SUMS` de la même version, puis ouvre l'écran
+  d'installation d'Android, qui demande toujours ta confirmation (et, la première fois,
+  d'autoriser l'appli à installer des applis). Rien ne s'installe sans toi.
 
 ## Téléphones
 

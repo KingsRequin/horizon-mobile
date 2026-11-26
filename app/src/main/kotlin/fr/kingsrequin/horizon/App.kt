@@ -14,9 +14,13 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.edit
@@ -43,28 +48,34 @@ import fr.kingsrequin.horizon.connection.LinkMode
 import fr.kingsrequin.horizon.connection.lastExitReason
 import fr.kingsrequin.horizon.design.DEFAULT_SEED
 import fr.kingsrequin.horizon.design.HorizonIcons
+import fr.kingsrequin.horizon.design.HorizonShapes
+import fr.kingsrequin.horizon.design.HorizonSpace
 import fr.kingsrequin.horizon.design.HorizonTheme
+import fr.kingsrequin.horizon.design.HorizonType
 import fr.kingsrequin.horizon.design.LocalHorizonColors
 import fr.kingsrequin.horizon.design.components.BarreNavigation
 import fr.kingsrequin.horizon.design.components.CarteLecture
 import fr.kingsrequin.horizon.design.components.Onglet
+import fr.kingsrequin.horizon.home.HomeActionsRoute
 import fr.kingsrequin.horizon.home.HomeScreen
 import fr.kingsrequin.horizon.link.LinkState
+import fr.kingsrequin.horizon.pairing.PairingFlow
+import fr.kingsrequin.horizon.pairing.PairingStep
+import fr.kingsrequin.horizon.pairing.PairingViewModel
 import fr.kingsrequin.horizon.protocol.ToPc
 import fr.kingsrequin.horizon.remote.Access
 import fr.kingsrequin.horizon.remote.RemoteRoute
 import fr.kingsrequin.horizon.remote.rememberCover
 import fr.kingsrequin.horizon.remote.remoteAccess
 import fr.kingsrequin.horizon.remote.soundAccess
-import fr.kingsrequin.horizon.home.HomeActionsRoute
-import fr.kingsrequin.horizon.pairing.PairingFlow
-import fr.kingsrequin.horizon.pairing.PairingStep
-import fr.kingsrequin.horizon.pairing.PairingViewModel
 import fr.kingsrequin.horizon.settings.Advice
 import fr.kingsrequin.horizon.settings.DeviceInfo
 import fr.kingsrequin.horizon.settings.SettingsActions
 import fr.kingsrequin.horizon.settings.SettingsScreen
 import fr.kingsrequin.horizon.settings.Update
+import fr.kingsrequin.horizon.settings.UpdateButton
+import fr.kingsrequin.horizon.settings.UpdateState
+import fr.kingsrequin.horizon.settings.Updater
 import fr.kingsrequin.horizon.settings.backgroundAdvice
 import fr.kingsrequin.horizon.settings.checkForUpdate
 import fr.kingsrequin.horizon.settings.diagnostic
@@ -153,6 +164,9 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
         }
     }
     val update by produceState<Update?>(null) { value = checkForUpdate(context, version, System.currentTimeMillis()) }
+    val updateState by Updater.state.collectAsStateWithLifecycle()
+    // Retour de l'écran « installer des applis inconnues » : l'installation reprend si c'est permis.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { Updater.resumed(context) }
     if (state is LinkState.Connected && !prefs.getBoolean(KEY_CONNECTED_ONCE, false)) prefs.edit { putBoolean(KEY_CONNECTED_ONCE, true) }
     // Relu à chaque retour à l'appli (la demande d'exemption et les réglages du système sont
     // d'autres écrans : la carte doit tomber dès qu'on en revient), et quand l'heure passe.
@@ -188,6 +202,9 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
                 },
                 onStatus = { tab = Tab.Settings },
                 modifier = content,
+                update = update?.let { found ->
+                    { UpdateCard(found, updateState) { Updater.start(context, found) } }
+                },
                 media = if (access == Access.Granted) {
                     { PlayingCard(onOpen = { tab = Tab.Remote }) }
                 } else {
@@ -224,11 +241,12 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
                     },
                     licences = { open(context, Intent(Intent.ACTION_VIEW, "$REPOSITORY/blob/main/LICENCES-TIERCES.md".toUri())) },
                     source = { open(context, Intent(Intent.ACTION_VIEW, REPOSITORY.toUri())) },
-                    download = { open(context, Intent(Intent.ACTION_VIEW, it.url.toUri())) },
+                    download = { Updater.start(context, it) },
                     systemControls = if (access != Access.Hidden) Link::setSystemControls else null,
                 ),
                 modifier = content,
                 systemControls = systemControls,
+                updateState = updateState,
             )
         }
         val labels = mapOf(
@@ -241,6 +259,19 @@ private fun Paired(state: LinkState, onPairAgain: () -> Unit) {
             current = tabs.indexOf(tab),
             onSelect = { tab = tabs[it] },
         )
+    }
+}
+
+/** La carte « nouvelle version » de l'accueil, avec le bouton de mise à jour. */
+@Composable
+private fun UpdateCard(update: Update, state: UpdateState, onClick: () -> Unit) {
+    val colors = LocalHorizonColors.current
+    Column(
+        Modifier.fillMaxWidth().clip(HorizonShapes.extraLarge).background(colors.surfaceContainer).padding(HorizonSpace.s4),
+        verticalArrangement = Arrangement.spacedBy(HorizonSpace.s3),
+    ) {
+        Text(stringResource(R.string.update_title, update.version), style = HorizonType.titleMedium, color = colors.onSurface)
+        UpdateButton(update, state, onClick)
     }
 }
 
