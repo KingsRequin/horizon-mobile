@@ -14,6 +14,9 @@ fun formatTime(ms: Long): String {
     return if (h > 0) String.format(Locale.ROOT, "%d:%02d:%02d", h, m, s) else String.format(Locale.ROOT, "%d:%02d", m, s)
 }
 
+/** Un temps restant, la seconde entamée comptée (« 5:00 » au départ, comme la barre d'Horizon). */
+fun formatCountdown(ms: Long): String = formatTime(ms.coerceAtLeast(0) + 999)
+
 /** L'initiale d'une appli (sa pastille dans le mixeur quand Horizon n'envoie pas d'icône). */
 fun appInitial(name: String): String = name.trim().firstOrNull()?.uppercase() ?: "?"
 

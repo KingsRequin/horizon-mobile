@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -223,8 +224,12 @@ fun RemoteScreen(view: RemoteView, cover: ImageBitmap?, connected: Boolean, acce
             GlissiereVolume(view.volume ?: 0f, view.muted, actions.volume, actions.mute, enabled = view.volume != null)
             if (mixer != null && mixer.apps.isNotEmpty()) {
                 Groupe(Modifier.fillMaxWidth()) {
+                    // Une clé par appli : quand l'ordre change (une appli se met à jouer et remonte),
+                    // le geste en cours reste sur l'appli qu'il règle.
                     mixer.apps.forEach { app ->
-                        LigneMixeur(app.name, app.volume, app.muted, { actions.appVolume(app.key, it) }, { actions.appMute(app.key, it) })
+                        key(app.key) {
+                            LigneMixeur(app.name, app.volume, app.muted, { actions.appVolume(app.key, it) }, { actions.appMute(app.key, it) })
+                        }
                     }
                 }
             }

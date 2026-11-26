@@ -32,7 +32,7 @@ import fr.kingsrequin.horizon.design.components.Groupe
 import fr.kingsrequin.horizon.design.components.GroupeActions
 import fr.kingsrequin.horizon.design.components.LigneNiveau
 import fr.kingsrequin.horizon.design.components.LigneReglage
-import fr.kingsrequin.horizon.design.formatTime
+import fr.kingsrequin.horizon.design.formatCountdown
 import fr.kingsrequin.horizon.link.ActionsNow
 import fr.kingsrequin.horizon.link.TimerNow
 import fr.kingsrequin.horizon.link.remainingAt
@@ -104,7 +104,7 @@ fun HomeActions(actions: ActionsNow?, access: Access, nowMs: Long, commands: Hom
             listOf(
                 ActionRapide(HorizonIcons.Lock, stringResource(R.string.actions_lock), null, commands.lock),
                 ActionRapide(HorizonIcons.Moon, stringResource(R.string.actions_dnd), actions.dnd) { commands.dnd(!actions.dnd) },
-                ActionRapide(HorizonIcons.Timer, timer?.let { formatTime(it.remainingAt(nowMs)) } ?: stringResource(R.string.actions_timer), timer != null) { timerSheet = true },
+                ActionRapide(HorizonIcons.Timer, timer?.let { formatCountdown(it.remainingAt(nowMs)) } ?: stringResource(R.string.actions_timer), timer != null) { timerSheet = true },
             ),
         )
         actions.headset?.let { headset ->

@@ -22,6 +22,14 @@ class MediaMathTest {
     }
 
     @Test
+    fun aCountdownCountsTheStartedSecondLikeTheBar() {
+        assertEquals("5:00", formatCountdown(300_000))
+        assertEquals("5:00", formatCountdown(299_001))
+        assertEquals("4:59", formatCountdown(299_000))
+        assertEquals("0:00", formatCountdown(0))
+    }
+
+    @Test
     fun anAppShowsTheFirstLetterOfItsName() {
         assertEquals("P", appInitial("pear desktop"))
         assertEquals("É", appInitial("  éditeur"))
